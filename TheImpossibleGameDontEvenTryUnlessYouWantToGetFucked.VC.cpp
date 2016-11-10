@@ -136,6 +136,7 @@ void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 	switch (e.keysym.sym)
 	{
 	case SDLK_LEFT:
+		
 		g_MoveLeft = true;
 		break;
 	case SDLK_RIGHT:
