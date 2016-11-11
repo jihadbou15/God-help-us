@@ -91,7 +91,7 @@ void BounceOffBat();
 
 // Variables
 const Point2f g_BatDimens{100.0f,20.0f};
-Point2f g_BatPos{g_WindowWidth/2 - g_BatDimens.x / 2 ,60.0f};
+const Point2f g_BatPos{g_WindowWidth/2 - g_BatDimens.x / 2 ,60.0f};
 Rectf g_BatRect{ g_BatPos.x, g_BatPos.y,g_BatDimens.x,g_BatDimens.y};
 float g_BatVel{};
 bool g_MoveLeft{};
@@ -136,7 +136,6 @@ void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 	switch (e.keysym.sym)
 	{
 	case SDLK_LEFT:
-		
 		g_MoveLeft = true;
 		break;
 	case SDLK_RIGHT:
@@ -210,19 +209,31 @@ void DrawBat()
 }
 void UpdateBat(float elapsedSec)
 {
-	g_BatRect.left += elapsedSec* g_BatVel;
-	if (g_MoveLeft)
+	
+	if (g_MoveLeft && (g_BatRect.left > 0.0f || g_BatRect.left + g_BatRect.width > g_WindowWidth))
 	{
 		g_BatVel = -g_VelBatValue;
-		g_MoveLeft = false;
-	}
-	else if (g_MoveRight)
-	{
-		g_BatVel = g_VelBatValue;
-		g_MoveRight = false;
+		
 	}
 
+	if (g_BatRect.left < 0.0f)
+	{
+		g_BatVel = 0;
+	}
+	g_MoveLeft = false;
+
+	if (g_MoveRight && g_BatRect.left + g_BatRect.width < g_WindowWidth)
+	{
+		g_BatVel = g_VelBatValue;
+		
+	}
+	if (g_BatRect.left + g_BatRect.width > g_WindowWidth)
+	{
+		g_BatVel = 0;
+	}
+	g_MoveRight = false;
 	
+	g_BatRect.left += elapsedSec* g_BatVel;
 	
 }
 void DrawBall()
