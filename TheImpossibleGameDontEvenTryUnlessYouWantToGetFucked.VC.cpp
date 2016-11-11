@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <string>
+#include <cmath>
 #include "structs.h"
 #include "utils.h"
 
@@ -88,15 +89,16 @@ void DrawBall();
 void UpdateBall(float elapsedSec);
 void KeepBallInScreen();
 void BounceOffBat();
+float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 
 // Variables
 const Point2f g_BatDimens{100.0f,20.0f};
 const Point2f g_BatPos{g_WindowWidth/2 - g_BatDimens.x / 2 ,60.0f};
 Rectf g_BatRect{ g_BatPos.x, g_BatPos.y,g_BatDimens.x,g_BatDimens.y};
 float g_BatVel{};
+float g_VelBatValue{300.0f};
 bool g_MoveLeft{};
 bool g_MoveRight{};
-float g_VelBatValue{300.0f};
 float g_ColorR{0.0f};
 float g_ColorG{1.0f};
 float g_ColorB{0.0f};
@@ -106,6 +108,8 @@ Point2f g_Radius{ 10.0f,10.0f };
 Point2f g_Center{ g_WindowWidth/2, g_WindowHeight / 2 };
 float g_VelBallYValue{ -100.0f };
 float g_VelBallXValue{100.0f};
+Point2f g_PrevBallPos{};
+
 #pragma endregion gameDeclarations
 
 
@@ -194,7 +198,6 @@ void Update( float elapsedSec )
 {
 	UpdateBat(elapsedSec);
 	UpdateBall(elapsedSec);
-
 }
 
 void Draw( )
@@ -209,25 +212,27 @@ void DrawBat()
 }
 void UpdateBat(float elapsedSec)
 {
-	
-	if (g_MoveLeft && (g_BatRect.left > 0.0f ))
+	//change bat velocity
+	g_BatRect.left += elapsedSec* g_BatVel;
+	if (g_MoveLeft)
 	{
 		g_BatVel = -g_VelBatValue;
+		g_MoveLeft = false;
 	}
-	else if (g_MoveLeft && g_BatRect.left < 0.0f)
-	{
-		g_BatVel = 0;
-	}
-	else if (g_MoveRight && (g_BatRect.left + g_BatRect.width < g_WindowWidth))
+	else if (g_MoveRight)
 	{
 		g_BatVel = g_VelBatValue;
+		g_MoveRight = false;
 	}
-	else if (g_MoveRight && g_BatRect.left + g_BatRect.width > g_WindowWidth)
+	//keep bat in screen
+	if (g_BatRect.left + g_BatRect.width> g_WindowWidth)
 	{
-		g_BatVel = 0;
+		g_BatRect.left = g_WindowWidth - g_BatRect.width;
 	}
-	
-	g_BatRect.left += elapsedSec* g_BatVel;
+	if (g_BatRect.left < 0.0f)
+	{
+		g_BatRect.left = 0.0f;
+	}
 	
 }
 void DrawBall()
@@ -236,41 +241,71 @@ void DrawBall()
 }
 void UpdateBall(float elapsedSec)
 {
+	//old position
+	g_PrevBallPos.x = g_Center.x;
+	g_PrevBallPos.y = g_Center.y;
 
+	//new position
 	g_Center.y += g_VelBallYValue*elapsedSec;
 	g_Center.x += g_VelBallXValue*elapsedSec;
-	
+
+	std::cout << CalculateAngle(g_PrevBallPos.x, g_PrevBallPos.y, g_Center.x, g_Center.y) << std::endl;
+
 	BounceOffBat();
 
 	KeepBallInScreen();
 }
+float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
+{
+	//caculate angle
+	float deltaY{ Point2Y - Point1Y };
+	float deltaX{ Point2X - Point1X };
+	float angle{ atan(deltaY / deltaX)*float(180 / M_PI) };
+
+	//fix atan values
+	if (deltaX < 0 && deltaY <0)
+	{
+		angle += 180;
+	}
+	if (deltaX < 0 && deltaY >0)
+	{
+		angle += 180;
+	}
+	std::cout << angle << std::endl;
+	if (deltaX > 0 && deltaY < 0)
+	{
+		angle += 360;
+	}
+	
+	return angle;
+}
 void BounceOffBat()
 {
-	// change something
+	
 
 
-	//if the ball comes from the bottom or top
-	if (dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x + g_Radius.x) 
-		|| dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x - g_Radius.x))
-	{
-		//top
-		if (g_Center.y - g_Radius.y  < g_BatRect.bottom + g_BatRect.height 
-			&& g_Center.y - g_Radius.y  > g_BatRect.bottom)
-		{
+	
+	//if (dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x + g_Radius.x) 
+	//	|| dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x - g_Radius.x))
+	//{
+	//	//top
+	//	if (g_Center.y - g_Radius.y  < g_BatRect.bottom + g_BatRect.height 
+	//		&& g_Center.y - g_Radius.y  > g_BatRect.bottom)
+	//	{
 
-			g_VelBallYValue = -g_VelBallYValue;
-			g_Center.y = g_Radius.y + g_BatRect.bottom + g_BatRect.height;
-		}
+	//		g_VelBallYValue = -g_VelBallYValue;
+	//		g_Center.y = g_Radius.y + g_BatRect.bottom + g_BatRect.height;
+	//	}
 
-		//bottom
-		if (g_Center.y + g_Radius.y > g_BatRect.bottom 
-			&& g_Center.y + g_Radius.y  < g_BatRect.bottom + g_BatRect.height)
-		{
-			g_VelBallYValue = -g_VelBallYValue;
-			g_Center.y =  g_BatRect.bottom - g_Radius.y;
-		}
-		
-	}
+	//	//bottom
+	//	if (g_Center.y + g_Radius.y > g_BatRect.bottom 
+	//		&& g_Center.y + g_Radius.y  < g_BatRect.bottom + g_BatRect.height)
+	//	{
+	//		g_VelBallYValue = -g_VelBallYValue;
+	//		g_Center.y =  g_BatRect.bottom - g_Radius.y;
+	//	}
+	//	
+	//}
 
 }
 void KeepBallInScreen()
