@@ -210,28 +210,22 @@ void DrawBat()
 void UpdateBat(float elapsedSec)
 {
 	
-	if (g_MoveLeft && (g_BatRect.left > 0.0f || g_BatRect.left + g_BatRect.width > g_WindowWidth))
+	if (g_MoveLeft && (g_BatRect.left > 0.0f ))
 	{
 		g_BatVel = -g_VelBatValue;
-		
 	}
-
-	if (g_BatRect.left < 0.0f)
+	else if (g_MoveLeft && g_BatRect.left < 0.0f)
 	{
 		g_BatVel = 0;
 	}
-	g_MoveLeft = false;
-
-	if (g_MoveRight && g_BatRect.left + g_BatRect.width < g_WindowWidth)
+	else if (g_MoveRight && (g_BatRect.left + g_BatRect.width < g_WindowWidth))
 	{
 		g_BatVel = g_VelBatValue;
-		
 	}
-	if (g_BatRect.left + g_BatRect.width > g_WindowWidth)
+	else if (g_MoveRight && g_BatRect.left + g_BatRect.width > g_WindowWidth)
 	{
 		g_BatVel = 0;
 	}
-	g_MoveRight = false;
 	
 	g_BatRect.left += elapsedSec* g_BatVel;
 	
