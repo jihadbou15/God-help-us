@@ -74,42 +74,54 @@ const Uint32 g_MaxElapsedTime{ 100 };
 // Functions
 void InitGameResources( );
 void FreeGameResources( );
+
 void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e );
 void ProcessKeyUpEvent( const SDL_KeyboardEvent  & e );
 void ProcessMouseMotionEvent( const SDL_MouseMotionEvent & e );
 void ProcessMouseDownEvent( const SDL_MouseButtonEvent & e );
 void ProcessMouseUpEvent( const SDL_MouseButtonEvent & e );
-void Update( float elapsedSec );
-void Draw( );
-void ClearBackground( );
 
-void DrawBat();
-void UpdateBat(float elapsedSec);
-void DrawBall();
+void Update( float elapsedSec );
 void UpdateBall(float elapsedSec);
 void KeepBallInScreen();
 void BounceOffBat();
+void UpdateBat(float elapsedSec);
+
+void Draw( );
+void DrawBat();
+void DrawBall();
+void ClearBackground( );
+
+
+
+
+
+
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 
 // Variables
+// init values
 const Point2f g_BatDimens{100.0f,20.0f};
 const Point2f g_BatPos{g_WindowWidth/2 - g_BatDimens.x / 2 ,60.0f};
-Rectf g_BatRect{ g_BatPos.x, g_BatPos.y,g_BatDimens.x,g_BatDimens.y};
-float g_BatVel{};
 float g_VelBatValue{300.0f};
-bool g_MoveLeft{};
-bool g_MoveRight{};
 float g_ColorR{0.0f};
 float g_ColorG{1.0f};
 float g_ColorB{0.0f};
 float g_ColorA{0.5f};
+
+//Bat var
+Rectf g_BatRect{ g_BatPos.x, g_BatPos.y,g_BatDimens.x,g_BatDimens.y};
+float g_BatVel{};
+bool g_MoveLeft{};
+bool g_MoveRight{};
+
+//Ball var
 Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
 Point2f g_Radius{ 10.0f,10.0f };
 Point2f g_Center{ g_WindowWidth/2, g_WindowHeight / 2 };
+Point2f g_PrevBallPos{};
 float g_VelBallYValue{ -100.0f };
 float g_VelBallXValue{100.0f};
-Point2f g_PrevBallPos{};
-
 #pragma endregion gameDeclarations
 
 
@@ -281,10 +293,6 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 }
 void BounceOffBat()
 {
-	
-
-
-	
 	//if (dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x + g_Radius.x) 
 	//	|| dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x - g_Radius.x))
 	//{
