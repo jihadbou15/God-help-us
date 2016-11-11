@@ -252,7 +252,9 @@ void UpdateBall(float elapsedSec)
 }
 void BounceOffBat()
 {
-	
+	// change something
+
+
 	//if the ball comes from the bottom or top
 	if (dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x + g_Radius.x) 
 		|| dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x - g_Radius.x))
