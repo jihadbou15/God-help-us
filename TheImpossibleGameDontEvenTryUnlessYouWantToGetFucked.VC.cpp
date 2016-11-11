@@ -84,7 +84,7 @@ void ProcessMouseUpEvent( const SDL_MouseButtonEvent & e );
 void Update( float elapsedSec );
 void UpdateBall(float elapsedSec);
 void KeepBallInScreen();
-void BounceOffBat();
+void BounceOffBat(Point2f PrevBallPos);
 void UpdateBat(float elapsedSec);
 
 void Draw( );
@@ -94,14 +94,11 @@ void ClearBackground( );
 
 
 
-
-
-
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 
 // Variables
 // init values
-const Point2f g_BatDimens{100.0f,20.0f};
+const Point2f g_BatDimens{100.0f,50.0f};
 const Point2f g_BatPos{g_WindowWidth/2 - g_BatDimens.x / 2 ,60.0f};
 float g_VelBatValue{300.0f};
 float g_ColorR{0.0f};
@@ -226,6 +223,7 @@ void UpdateBat(float elapsedSec)
 {
 	//change bat velocity
 	g_BatRect.left += elapsedSec* g_BatVel;
+
 	if (g_MoveLeft)
 	{
 		g_BatVel = -g_VelBatValue;
@@ -261,9 +259,7 @@ void UpdateBall(float elapsedSec)
 	g_Center.y += g_VelBallYValue*elapsedSec;
 	g_Center.x += g_VelBallXValue*elapsedSec;
 
-	std::cout << CalculateAngle(g_PrevBallPos.x, g_PrevBallPos.y, g_Center.x, g_Center.y) << std::endl;
-
-	BounceOffBat();
+	BounceOffBat(g_PrevBallPos);
 
 	KeepBallInScreen();
 }
@@ -283,7 +279,6 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 	{
 		angle += 180;
 	}
-	std::cout << angle << std::endl;
 	if (deltaX > 0 && deltaY < 0)
 	{
 		angle += 360;
@@ -291,29 +286,52 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 	
 	return angle;
 }
-void BounceOffBat()
+void BounceOffBat(Point2f PrevBallPos)
 {
-	//if (dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x + g_Radius.x) 
-	//	|| dae::IsXBetween(g_BatRect.left + g_BatDimens.x, g_BatRect.left, g_Center.x - g_Radius.x))
-	//{
-	//	//top
-	//	if (g_Center.y - g_Radius.y  < g_BatRect.bottom + g_BatRect.height 
-	//		&& g_Center.y - g_Radius.y  > g_BatRect.bottom)
-	//	{
+	bool IsBallXInRect
+	{ 
+		dae::IsXBetween(g_BatRect.left + g_BatRect.width, g_BatRect.left, g_Center.x + g_Radius.x)
+		|| dae::IsXBetween(g_BatRect.left + g_BatRect.width, g_BatRect.left, g_Center.x - g_Radius.x) 
+	};
+	bool IsBallYInRect
+	{ 
+		dae::IsYBetween(g_BatRect.bottom + g_BatRect.height, g_BatRect.bottom, g_Center.y + g_Radius.y)
+		|| dae::IsYBetween(g_BatRect.bottom + g_BatRect.height, g_BatRect.bottom, g_Center.y - g_Radius.y) 
+	};
+	if (IsBallXInRect && IsBallYInRect)// if the ball hits the rect
+	{
+		//if it hits on the left or right
+		if (PrevBallPos.y < g_BatRect.bottom + g_BatRect.height && PrevBallPos.y > g_BatRect.bottom)
+		{
+			g_VelBallXValue = -g_VelBallXValue;
+			//if it hits on the right
+			if (PrevBallPos.x > g_BatRect.left && PrevBallPos.x > g_BatRect.left + g_BatRect.width)
+			{
+				g_Center.x = g_BatRect.left + g_BatRect.width + g_Radius.x;
+			}
+			//if it hits on the right
+			else
+			{
+				g_Center.x = g_BatRect.left - g_Radius.x;
+			}
+		}
+		//if it hits on the top or bottom
+		if (PrevBallPos.x > g_BatRect.left  && PrevBallPos.x < g_BatRect.left+ g_BatRect.width)
+		{
+			g_VelBallYValue = -g_VelBallYValue;
+			//if it hits on the top
+			if (PrevBallPos.y > g_BatRect.bottom && PrevBallPos.y > g_BatRect.bottom + g_BatRect.height)
+			{
+				g_Center.y = g_BatRect.bottom + g_BatRect.height + g_Radius.y;
+			}
+			//if it hits on the bottom
+			else
+			{
+				g_Center.y = g_BatRect.bottom - g_Radius.y;
+			}
+		}
 
-	//		g_VelBallYValue = -g_VelBallYValue;
-	//		g_Center.y = g_Radius.y + g_BatRect.bottom + g_BatRect.height;
-	//	}
-
-	//	//bottom
-	//	if (g_Center.y + g_Radius.y > g_BatRect.bottom 
-	//		&& g_Center.y + g_Radius.y  < g_BatRect.bottom + g_BatRect.height)
-	//	{
-	//		g_VelBallYValue = -g_VelBallYValue;
-	//		g_Center.y =  g_BatRect.bottom - g_Radius.y;
-	//	}
-	//	
-	//}
+	}
 
 }
 void KeepBallInScreen()
