@@ -119,6 +119,21 @@ Point2f g_Center{ g_WindowWidth/2, g_WindowHeight / 2 };
 Point2f g_PrevBallPos{};
 float g_VelBallYValue{ -100.0f };
 float g_VelBallXValue{100.0f};
+
+//Texture var
+Texture g_BallTex{};
+Texture g_BatTex{};
+Texture g_BombTex{};
+Texture g_BossTex{};
+Texture g_BossWithLaserTex{};
+Texture g_dangerTex{};
+Texture g_deadBatTex{};
+Texture g_LaserTex{};
+Texture g_LaserBossTex{};
+Texture g_LeftCanonTex{};
+Texture g_RightCanonTex{};
+Texture g_LeftCanonLaserTex{};
+Texture g_RightCanonLaserTex{};
 #pragma endregion gameDeclarations
 
 
@@ -140,9 +155,23 @@ int main( int argc, char* args[] )
 #pragma region gameImplementations
 void InitGameResources( )
 {
+	TextureFromFile("Resources/ball.png",g_BallTex);
+	TextureFromFile("Resources/bat.png", g_BatTex);
+	TextureFromFile("Resources/bomb.png", g_BombTex);
+	TextureFromFile("Resources/boss.png", g_BossTex);
+	TextureFromFile("Resources/bossWithLaser.png", g_BossWithLaserTex);
+	TextureFromFile("Resources/danger.png", g_dangerTex);
+	TextureFromFile("Resources/deadBat.png", g_deadBatTex);
+	TextureFromFile("Resources/laser.png", g_LaserTex);
+	TextureFromFile("Resources/laserBoss.png", g_LaserBossTex);
+	TextureFromFile("Resources/leftCanon.png", g_LeftCanonTex);
+	TextureFromFile("Resources/leftCanonLaser.png", g_LeftCanonLaserTex);
+	TextureFromFile("Resources/rightCanon.png", g_RightCanonTex);
+	TextureFromFile("Resources/rightCanonLaser.png", g_RightCanonLaserTex);
 }
 void FreeGameResources( )
 {
+
 }
 void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 {
