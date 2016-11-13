@@ -30,8 +30,8 @@
 #include "utils.h"
 
 #pragma region windowInformation
-const float g_WindowWidth{ 400.0f };
-const float g_WindowHeight{ 300.0f };
+const float g_WindowWidth{ 600.0f };
+const float g_WindowHeight{ 800.0f };
 const std::string g_WindowTitle{ "TheImpossibleGameDontEvenTryUnlessYouWantToGetFucked - Bossuyt, Niels- 1DAE06" };
 bool g_IsVSyncOn{ true };
 #pragma endregion windowInformation
@@ -114,11 +114,11 @@ bool g_MoveRight{};
 
 //Ball var
 Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
-Point2f g_Radius{ 10.0f,10.0f };
+Point2f g_Radius{ 20.0f,20.0f };
 Point2f g_Center{ g_WindowWidth/2, g_WindowHeight / 2 };
 Point2f g_PrevBallPos{};
-float g_VelBallYValue{ -100.0f };
-float g_VelBallXValue{100.0f};
+float g_VelBallYValue{ -300.0f };
+float g_VelBallXValue{300.0f};
 
 //Texture var
 Texture g_BallTex{};
@@ -156,22 +156,34 @@ int main( int argc, char* args[] )
 void InitGameResources( )
 {
 	TextureFromFile("Resources/ball.png",g_BallTex);
-	TextureFromFile("Resources/bat.png", g_BatTex);
+	TextureFromFile("Resources/bat base.png", g_BatTex);
 	TextureFromFile("Resources/bomb.png", g_BombTex);
 	TextureFromFile("Resources/boss.png", g_BossTex);
-	TextureFromFile("Resources/bossWithLaser.png", g_BossWithLaserTex);
+	TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
 	TextureFromFile("Resources/danger.png", g_dangerTex);
-	TextureFromFile("Resources/deadBat.png", g_deadBatTex);
-	TextureFromFile("Resources/laser.png", g_LaserTex);
-	TextureFromFile("Resources/laserBoss.png", g_LaserBossTex);
-	TextureFromFile("Resources/leftCanon.png", g_LeftCanonTex);
-	TextureFromFile("Resources/leftCanonLaser.png", g_LeftCanonLaserTex);
-	TextureFromFile("Resources/rightCanon.png", g_RightCanonTex);
-	TextureFromFile("Resources/rightCanonLaser.png", g_RightCanonLaserTex);
+	TextureFromFile("Resources/bat dead.png", g_deadBatTex);
+	TextureFromFile("Resources/laser piece.png", g_LaserTex);
+	TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
+	TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
+	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
+	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
+	TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
 }
 void FreeGameResources( )
 {
-
+	DeleteTexture(g_BallTex);
+	DeleteTexture(g_BatTex);
+	DeleteTexture(g_BombTex);
+	DeleteTexture(g_BossTex);
+	DeleteTexture(g_BossWithLaserTex);
+	DeleteTexture(g_dangerTex);
+	DeleteTexture(g_deadBatTex);
+	DeleteTexture(g_LaserTex);
+	DeleteTexture(g_LaserBossTex);
+	DeleteTexture(g_LeftCanonTex);
+	DeleteTexture(g_LeftCanonLaserTex);
+	DeleteTexture(g_RightCanonTex);
+	DeleteTexture(g_RightCanonLaserTex);
 }
 void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 {
@@ -246,7 +258,8 @@ void Draw( )
 }
 void DrawBat()
 {
-	dae::DrawRect(g_BatRect);
+	//dae::DrawRect(g_BatRect);
+	DrawTexture(g_BatTex, g_BatRect);
 }
 void UpdateBat(float elapsedSec)
 {
@@ -276,7 +289,15 @@ void UpdateBat(float elapsedSec)
 }
 void DrawBall()
 {
-	dae::DrawEllipse(g_ColorBall, g_Center, g_Radius);
+	//dae::DrawEllipse(g_ColorBall, g_Center, g_Radius);
+	float scale{g_BallTex.width/(2*g_Radius.x)};
+	Rectf ballRect{};
+	ballRect.left = g_Center.x - g_Radius.x;
+	ballRect.bottom = g_Center.y - g_Radius.y;
+	ballRect.width = g_BallTex.width / scale;
+	ballRect.height = g_BallTex.height / scale;;
+	DrawTexture(g_BallTex,ballRect);
+
 }
 void UpdateBall(float elapsedSec)
 {
