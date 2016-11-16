@@ -91,6 +91,7 @@ void Draw( );
 void DrawBat();
 void DrawBall();
 void ClearBackground( );
+void DrawLaser();
 
 
 
@@ -255,6 +256,7 @@ void Draw( )
 	ClearBackground( );
 	DrawBat();
 	DrawBall();
+	DrawLaser();
 }
 void DrawBat()
 {
@@ -406,6 +408,13 @@ void KeepBallInScreen()
 		g_VelBallXValue = -g_VelBallXValue;
 		g_Center.x = g_Radius.x;
 	}
+}
+void DrawLaser()
+{
+	float leftLaserX{0.0f};
+	float leftLaserY{g_WindowHeight/3};
+	Rectf leftLaserPos{,,,};
+	DrawTexture(g_LeftCanonTex, leftLaserPos);
 }
 #pragma endregion gameImplementations
 
