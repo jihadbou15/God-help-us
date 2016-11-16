@@ -143,6 +143,7 @@ Point2f g_PrevBallPos{};
 float g_VelBallYValue{ 300.0f };
 float g_VelBallXValue{300.0f};
 
+
 //Texture var
 Texture g_BallTex{};
 Texture g_BatTex{};
@@ -157,6 +158,11 @@ Texture g_LeftCanonTex{};
 Texture g_RightCanonTex{};
 Texture g_LeftCanonLaserTex{};
 Texture g_RightCanonLaserTex{};
+
+//laser var
+bool g_IsShooting{false};
+
+
 #pragma endregion gameDeclarations
 
 
@@ -277,6 +283,13 @@ void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 	case SDLK_RIGHT:
 		g_MoveRight = true;
 		break;
+	case SDLK_l:
+		g_IsShooting = false;
+		break;
+	case SDLK_k:
+		g_IsShooting = true;
+		break;
+	
 	}
 }
 void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
@@ -394,7 +407,7 @@ void DrawBricks(Rectf *pArray,ObjState *pState, int rows, int columns)
 		for (int j = 0; j < columns; j++)
 		{
 			if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
-			{
+{
 				dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)],color);
 				dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
 			}
@@ -531,6 +544,27 @@ void KeepBallInScreen()
 		g_VelBallXValue = -g_VelBallXValue;
 		g_Center.x = g_Radius.x;
 	}
+}
+void DrawLaser()
+{
+	float scale{0.75f};
+	float leftLaserX{0.0f};
+	float leftLaserY{g_WindowHeight/3};
+	float scaleLaserPiece{ 0.5f };
+	float xCorrection{100.0f};
+	int numberPieces{ 30 };
+
+	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
+	DrawTexture(g_LeftCanonTex, leftLaserPos);
+
+	if (g_IsShooting)
+	{
+		
+	}
+	Rectf laserStartPos{ leftLaserX + g_LeftCanonTex.width*scale- xCorrection,leftLaserY,g_LeftCanonLaserTex.width*scaleLaserPiece,g_LeftCanonLaserTex.height*scaleLaserPiece };
+	DrawTexture(g_LeftCanonLaserTex, laserStartPos);
+
+
 }
 
 #pragma endregion gameImplementations
@@ -910,13 +944,14 @@ void DrawTexture( const Texture & texture, const Rectf & vertexRect, const Rectf
 	float vertexTop{};
 	if ( !( vertexRect.width > 0.0f && vertexRect.height > 0.0f ) ) // If no size specified use size of texture
 	{
-		vertexRight = vertexLeft + texture.width;
-		vertexTop = vertexBottom + texture.height;
+		
+		vertexRight = vertexLeft + (texture.width);
+		vertexTop = vertexBottom + (texture.height);
 	}
 	else
 	{
-		vertexRight = vertexLeft + vertexRect.width;
-		vertexTop = vertexBottom + vertexRect.height;
+		vertexRight = vertexLeft + (vertexRect.width);
+		vertexTop = vertexBottom + (vertexRect.height);
 
 	}
 
@@ -929,7 +964,7 @@ void DrawTexture( const Texture & texture, const Rectf & vertexRect, const Rectf
 	{
 		glBegin( GL_QUADS );
 		{
-			glTexCoord2f( textLeft, textBottom );
+			glTexCoord2f( textLeft, textBottom);
 			glVertex2f( vertexLeft, vertexBottom );
 
 			glTexCoord2f( textLeft, textTop );
