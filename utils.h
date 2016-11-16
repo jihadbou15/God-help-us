@@ -3,6 +3,7 @@
 namespace dae
 {
 	void DrawRect(Rectf rect, float e = 1);
+	void DrawRect(Rectf rect,Color4f color, float e = 1 );
 	void DrawFillRect(Rectf rect, Color4f color);
 	void DrawEqualTriangle(float startX, float startY, float side);
 	void DrawGradient(Rectf rect, Color4f firstColor, Color4f secondColor);
