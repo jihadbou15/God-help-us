@@ -104,6 +104,7 @@ void Draw( );
 void DrawBat();
 void DrawBall();
 void DrawBricks(Rectf *pArray,ObjState *pState, int rows, int columns);
+void DrawLaser();
 void ClearBackground( );
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
@@ -351,6 +352,8 @@ void Draw( )
 	DrawBat();
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
+	DrawLaser();
+
 }
 void DrawBat()
 {
