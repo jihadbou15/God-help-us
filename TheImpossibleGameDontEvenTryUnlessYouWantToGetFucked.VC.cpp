@@ -426,11 +426,11 @@ void KeepBallInScreen()
 }
 void DrawLaser()
 {
-	float scale{ 0.6f };
+	float scale{0.75f};
 	float leftLaserX{0.0f};
 	float leftLaserY{g_WindowHeight/3};
 	float scaleLaserPiece{ 0.5f };
-	float correction{10.0f};
+	float xCorrection{100.0f};
 	int numberPieces{ 30 };
 
 	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
@@ -438,10 +438,11 @@ void DrawLaser()
 
 	if (g_IsShooting)
 	{
-
-	
+		
 	}
-	
+	Rectf laserStartPos{ leftLaserX + g_LeftCanonTex.width*scale- xCorrection,leftLaserY,g_LeftCanonLaserTex.width*scaleLaserPiece,g_LeftCanonLaserTex.height*scaleLaserPiece };
+	DrawTexture(g_LeftCanonLaserTex, laserStartPos);
+
 
 }
 #pragma endregion gameImplementations
