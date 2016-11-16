@@ -138,7 +138,6 @@ Texture g_LeftCanonLaserTex{};
 Texture g_RightCanonLaserTex{};
 
 //laser var
-Texture g_LeftCanonTexState = g_LeftCanonTex ;
 bool g_IsShooting{false};
 
 
@@ -206,11 +205,9 @@ void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 		g_MoveRight = true;
 		break;
 	case SDLK_l:
-		g_LeftCanonTexState = g_LeftCanonTex;
 		g_IsShooting = false;
 		break;
 	case SDLK_k:
-		g_LeftCanonTexState = g_LeftCanonLaserTex;
 		g_IsShooting = true;
 		break;
 	
@@ -432,20 +429,17 @@ void DrawLaser()
 	float scale{ 0.6f };
 	float leftLaserX{0.0f};
 	float leftLaserY{g_WindowHeight/3};
-	float scaleLaserPiece{ 0.25f };
+	float scaleLaserPiece{ 0.5f };
 	float correction{10.0f};
 	int numberPieces{ 30 };
 
 	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-	DrawTexture(g_LeftCanonTexState, leftLaserPos);
+	DrawTexture(g_LeftCanonTex, leftLaserPos);
 
 	if (g_IsShooting)
 	{
-		for (int i{}; i < numberPieces; i++)
-		{
-			Rectf LaserPos{ leftLaserPos.left + leftLaserPos.width+i*g_LaserTex.width*scaleLaserPiece,leftLaserPos.bottom + leftLaserPos.height / 2 - correction,g_LaserTex.width*scaleLaserPiece,g_LaserTex.height*scaleLaserPiece };
-			DrawTexture(g_LaserTex, LaserPos);
-		}
+
+	
 	}
 	
 
