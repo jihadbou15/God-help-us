@@ -432,14 +432,20 @@ void DrawLaser()
 	float scale{ 0.6f };
 	float leftLaserX{0.0f};
 	float leftLaserY{g_WindowHeight/3};
-	
+	float scaleLaserPiece{ 0.25f };
+	float correction{10.0f};
+	int numberPieces{ 30 };
+
 	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-	
 	DrawTexture(g_LeftCanonTexState, leftLaserPos);
+
 	if (g_IsShooting)
 	{
-		Rectf LaserPos{leftLaserPos.left+leftLaserPos.width,leftLaserPos.bottom+leftLaserPos.height/2,g_LaserTex.width,g_LaserTex.height};
-		DrawTexture(g_LaserTex,LaserPos);
+		for (int i{}; i < numberPieces; i++)
+		{
+			Rectf LaserPos{ leftLaserPos.left + leftLaserPos.width+i*g_LaserTex.width*scaleLaserPiece,leftLaserPos.bottom + leftLaserPos.height / 2 - correction,g_LaserTex.width*scaleLaserPiece,g_LaserTex.height*scaleLaserPiece };
+			DrawTexture(g_LaserTex, LaserPos);
+		}
 	}
 	
 
