@@ -139,6 +139,7 @@ Texture g_RightCanonLaserTex{};
 
 //laser var
 Texture g_LeftCanonTexState = g_LeftCanonTex ;
+bool g_IsShooting{false};
 
 
 #pragma endregion gameDeclarations
@@ -206,9 +207,11 @@ void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 		break;
 	case SDLK_l:
 		g_LeftCanonTexState = g_LeftCanonTex;
+		g_IsShooting = false;
 		break;
 	case SDLK_k:
 		g_LeftCanonTexState = g_LeftCanonLaserTex;
+		g_IsShooting = true;
 		break;
 	
 	}
@@ -430,11 +433,14 @@ void DrawLaser()
 	float leftLaserX{0.0f};
 	float leftLaserY{g_WindowHeight/3};
 	
-	
 	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
 	
-
 	DrawTexture(g_LeftCanonTexState, leftLaserPos);
+	if (g_IsShooting)
+	{
+		Rectf LaserPos{leftLaserPos.left+leftLaserPos.width,leftLaserPos.bottom+leftLaserPos.height/2,g_LaserTex.width,g_LaserTex.height};
+		DrawTexture(g_LaserTex,LaserPos);
+	}
 	
 
 }
