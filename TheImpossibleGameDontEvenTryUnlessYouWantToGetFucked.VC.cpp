@@ -30,7 +30,7 @@
 #include "utils.h"
 
 #pragma region windowInformation
-const float g_WindowWidth{ 600.0f };
+const float g_WindowWidth{ 1000.0f };
 const float g_WindowHeight{ 800.0f };
 const std::string g_WindowTitle{ "TheImpossibleGameDontEvenTryUnlessYouWantToGetFucked - Bossuyt, Niels- 1DAE06" };
 bool g_IsVSyncOn{ true };
@@ -121,6 +121,7 @@ Point2f g_PrevBallPos{};
 float g_VelBallYValue{ -300.0f };
 float g_VelBallXValue{300.0f};
 
+
 //Texture var
 Texture g_BallTex{};
 Texture g_BatTex{};
@@ -135,6 +136,11 @@ Texture g_LeftCanonTex{};
 Texture g_RightCanonTex{};
 Texture g_LeftCanonLaserTex{};
 Texture g_RightCanonLaserTex{};
+
+//laser var
+Texture g_LeftCanonTexState = g_LeftCanonTex ;
+
+
 #pragma endregion gameDeclarations
 
 
@@ -169,6 +175,8 @@ void InitGameResources( )
 	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
 	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
 	TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
+
+
 }
 void FreeGameResources( )
 {
@@ -196,6 +204,13 @@ void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 	case SDLK_RIGHT:
 		g_MoveRight = true;
 		break;
+	case SDLK_l:
+		g_LeftCanonTexState = g_LeftCanonTex;
+		break;
+	case SDLK_k:
+		g_LeftCanonTexState = g_LeftCanonLaserTex;
+		break;
+	
 	}
 }
 void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
@@ -411,10 +426,17 @@ void KeepBallInScreen()
 }
 void DrawLaser()
 {
+	float scale{ 0.6f };
 	float leftLaserX{0.0f};
 	float leftLaserY{g_WindowHeight/3};
-	Rectf leftLaserPos{,,,};
-	DrawTexture(g_LeftCanonTex, leftLaserPos);
+	
+	
+	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
+	
+
+	DrawTexture(g_LeftCanonTexState, leftLaserPos);
+	
+
 }
 #pragma endregion gameImplementations
 
@@ -793,16 +815,17 @@ void DrawTexture( const Texture & texture, const Rectf & vertexRect, const Rectf
 	float vertexTop{};
 	if ( !( vertexRect.width > 0.0f && vertexRect.height > 0.0f ) ) // If no size specified use size of texture
 	{
-		vertexRight = vertexLeft + texture.width;
-		vertexTop = vertexBottom + texture.height;
+		
+		vertexRight = vertexLeft + (texture.width);
+		vertexTop = vertexBottom + (texture.height);
 	}
 	else
 	{
-		vertexRight = vertexLeft + vertexRect.width;
-		vertexTop = vertexBottom + vertexRect.height;
+		vertexRight = vertexLeft + (vertexRect.width);
+		vertexTop = vertexBottom + (vertexRect.height);
 
 	}
-
+	
 	// Tell opengl which texture we will use
 	glBindTexture( GL_TEXTURE_2D, texture.id );
 	glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
@@ -812,7 +835,7 @@ void DrawTexture( const Texture & texture, const Rectf & vertexRect, const Rectf
 	{
 		glBegin( GL_QUADS );
 		{
-			glTexCoord2f( textLeft, textBottom );
+			glTexCoord2f( textLeft, textBottom);
 			glVertex2f( vertexLeft, vertexBottom );
 
 			glTexCoord2f( textLeft, textTop );
