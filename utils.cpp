@@ -22,6 +22,21 @@ namespace dae
 
 		glEnd();
 	}
+	void DrawRect(Rectf rect, Color4f color, float e)
+	{
+		glColor4f(color.r,color.g,color.b,color.a);
+
+		glLineWidth(e);
+
+		glBegin(GL_LINE_LOOP);
+
+		glVertex2f(rect.left, rect.bottom);
+		glVertex2f(rect.left + rect.width, rect.bottom);
+		glVertex2f(rect.left + rect.width, rect.bottom + rect.height);
+		glVertex2f(rect.left, rect.bottom + rect.height);
+
+		glEnd();
+	}
 	void DrawFillRect(Rectf rect, Color4f color)
 	{
 		glColor4f(color.r, color.g, color.b, color.a);

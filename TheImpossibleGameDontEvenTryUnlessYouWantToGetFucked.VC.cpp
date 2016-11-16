@@ -71,8 +71,21 @@ const Uint32 g_MaxElapsedTime{ 100 };
 #pragma endregion coreDeclarations
 
 #pragma region gameDeclarations
+//Enum class
+
+enum class ObjState
+{
+	Destroyed, Running, Destroying
+};
+
+enum class Diff
+{
+	Easy, Medium, Hard, Daddy, DOA
+};
+
 // Functions
 void InitGameResources( );
+void InitBricks(Rectf *pArray, ObjState *pState, int columns, int rows);
 void FreeGameResources( );
 
 void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e );
@@ -82,18 +95,16 @@ void ProcessMouseDownEvent( const SDL_MouseButtonEvent & e );
 void ProcessMouseUpEvent( const SDL_MouseButtonEvent & e );
 
 void Update( float elapsedSec );
-void UpdateBall(float elapsedSec);
+void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState);
 void KeepBallInScreen();
-void BounceOffBat(Point2f PrevBallPos);
+bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle);
 void UpdateBat(float elapsedSec);
 
 void Draw( );
 void DrawBat();
 void DrawBall();
+void DrawBricks(Rectf *pArray,ObjState *pState, int rows, int columns);
 void ClearBackground( );
-void DrawLaser();
-
-
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 
@@ -106,6 +117,17 @@ float g_ColorR{0.0f};
 float g_ColorG{1.0f};
 float g_ColorB{0.0f};
 float g_ColorA{0.5f};
+Diff g_GameDiff{};
+
+//brick var 
+float g_BrickWidth{ 40.0f };
+float g_BrickHeight{ 20.0f };
+
+int g_Rows{};
+int g_Columns{int((g_WindowWidth-g_BrickWidth)/g_BrickWidth)};
+
+Rectf *bricks{};
+ObjState *bricksState{};
 
 //Bat var
 Rectf g_BatRect{ g_BatPos.x, g_BatPos.y,g_BatDimens.x,g_BatDimens.y};
@@ -115,10 +137,10 @@ bool g_MoveRight{};
 
 //Ball var
 Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
-Point2f g_Radius{ 20.0f,20.0f };
-Point2f g_Center{ g_WindowWidth/2, g_WindowHeight / 2 };
+Point2f g_Radius{ 10.0f,10.0f };
+Point2f g_Center{ g_WindowWidth/2,120.0f };
 Point2f g_PrevBallPos{};
-float g_VelBallYValue{ -300.0f };
+float g_VelBallYValue{ 300.0f };
 float g_VelBallXValue{300.0f};
 
 
@@ -145,8 +167,43 @@ bool g_IsShooting{false};
 
 
 
+
 int main( int argc, char* args[] )
 {
+	int choice{};
+
+	std::cout << "Choose difficulty level:  0 = easy , 1  = medium , 2 = hard , 3 = Daddy, 4 = Dead on arrival: ";
+	std::cin >> choice;
+	
+	while (choice < 0 || choice > 4);
+	{
+		std::cout << "not within range: Try again" << std::endl;
+		std::cin >> choice;
+
+	}
+
+	switch (choice)
+	{
+	case 0: g_Rows = 3;
+		g_GameDiff = Diff(choice);
+		break;
+	case 1: g_Rows = 5;
+		g_GameDiff = Diff(choice);
+		break;
+	case 2: g_Rows = 8;
+		g_GameDiff = Diff(choice);
+		break;
+	case 3: g_Rows = 11;
+		g_GameDiff = Diff(choice);
+		break;
+	case 4: g_Rows = 17;
+		g_GameDiff = Diff(choice);
+		break;
+	}
+
+	bricks = new Rectf[g_Rows * g_Columns]{};
+	bricksState = new ObjState[g_Rows * g_Columns]{};
+
 	// Initialize SDL and OpenGL
 	Initialize( );
 
@@ -156,6 +213,8 @@ int main( int argc, char* args[] )
 	// Clean up SDL and OpenGL
 	Cleanup( );
 
+	delete[] bricks;
+
 	return 0;
 }
 
@@ -164,19 +223,37 @@ void InitGameResources( )
 {
 	TextureFromFile("Resources/ball.png",g_BallTex);
 	TextureFromFile("Resources/bat base.png", g_BatTex);
+	TextureFromFile("Resources/bat dead.png", g_deadBatTex);
+
+	TextureFromFile("Resources/danger.png", g_dangerTex);
 	TextureFromFile("Resources/bomb.png", g_BombTex);
 	TextureFromFile("Resources/boss.png", g_BossTex);
 	TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
-	TextureFromFile("Resources/danger.png", g_dangerTex);
-	TextureFromFile("Resources/bat dead.png", g_deadBatTex);
+	
 	TextureFromFile("Resources/laser piece.png", g_LaserTex);
 	TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
+
 	TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
 	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
 	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
 	TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
 
+	InitBricks(bricks, bricksState, g_Columns, g_Rows);
+}
 
+void InitBricks(Rectf * pArray,ObjState *pState, int columns, int rows)
+{
+	for (int i = 0; i < rows; i++)
+	{
+		for (int j = 0; j < columns; j++)
+		{
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].width = g_BrickWidth;
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].height = g_BrickHeight;
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].left = (g_BrickWidth/2) + (j*g_BrickWidth);
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].bottom = (g_WindowHeight - 256.0f) - (i*g_BrickHeight);
+			pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Running;
+		}
+	}
 }
 void FreeGameResources( )
 {
@@ -193,6 +270,8 @@ void FreeGameResources( )
 	DeleteTexture(g_LeftCanonLaserTex);
 	DeleteTexture(g_RightCanonTex);
 	DeleteTexture(g_RightCanonLaserTex);
+
+	
 }
 void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 {
@@ -263,7 +342,7 @@ void ClearBackground( )
 void Update( float elapsedSec )
 {
 	UpdateBat(elapsedSec);
-	UpdateBall(elapsedSec);
+	UpdateBall(elapsedSec, bricks, bricksState);
 }
 
 void Draw( )
@@ -271,7 +350,7 @@ void Draw( )
 	ClearBackground( );
 	DrawBat();
 	DrawBall();
-	DrawLaser();
+	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
 }
 void DrawBat()
 {
@@ -304,6 +383,7 @@ void UpdateBat(float elapsedSec)
 	}
 	
 }
+
 void DrawBall()
 {
 	//dae::DrawEllipse(g_ColorBall, g_Center, g_Radius);
@@ -316,7 +396,26 @@ void DrawBall()
 	DrawTexture(g_BallTex,ballRect);
 
 }
-void UpdateBall(float elapsedSec)
+
+void DrawBricks(Rectf *pArray,ObjState *pState, int rows, int columns)
+{
+	Color4f color{ 1.0f,0.0f,0.0f,1.0f };
+	Color4f outline{ 1.0f,1.0f,1.0f,1.0f };
+
+	for (int i = 0; i < rows; i++)
+	{
+		for (int j = 0; j < columns; j++)
+		{
+			if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
+{
+				dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)],color);
+				dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+			}
+			
+		}
+	}
+}
+void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 {
 	//old position
 	g_PrevBallPos.x = g_Center.x;
@@ -326,7 +425,25 @@ void UpdateBall(float elapsedSec)
 	g_Center.y += g_VelBallYValue*elapsedSec;
 	g_Center.x += g_VelBallXValue*elapsedSec;
 
-	BounceOffBat(g_PrevBallPos);
+	CollisionDetect(g_PrevBallPos, g_BatRect);
+	
+	bool hit{ false };
+	
+	for (int i = 0; i < g_Rows; i++)
+	{
+		for (int j = 0; j < g_Columns; j++)
+		{
+			if (pState[dae::GetArrayIndex(i, j, g_Columns)] == ObjState::Running)
+			{
+				hit = CollisionDetect(g_PrevBallPos, pArray[dae::GetArrayIndex(i, j, g_Columns)]);
+
+				if (hit)
+				{
+					pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Destroyed;
+				}
+			}
+		}
+	}
 
 	KeepBallInScreen();
 }
@@ -353,52 +470,56 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 	
 	return angle;
 }
-void BounceOffBat(Point2f PrevBallPos)
+
+bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 {
 	bool IsBallXInRect
 	{ 
-		dae::IsXBetween(g_BatRect.left + g_BatRect.width, g_BatRect.left, g_Center.x + g_Radius.x)
-		|| dae::IsXBetween(g_BatRect.left + g_BatRect.width, g_BatRect.left, g_Center.x - g_Radius.x) 
+		dae::IsXBetween(rectangle.left + rectangle.width, rectangle.left, g_Center.x + g_Radius.x)
+		|| dae::IsXBetween(rectangle.left + rectangle.width, rectangle.left, g_Center.x - g_Radius.x) 
 	};
 	bool IsBallYInRect
 	{ 
-		dae::IsYBetween(g_BatRect.bottom + g_BatRect.height, g_BatRect.bottom, g_Center.y + g_Radius.y)
-		|| dae::IsYBetween(g_BatRect.bottom + g_BatRect.height, g_BatRect.bottom, g_Center.y - g_Radius.y) 
+		dae::IsYBetween(rectangle.bottom + rectangle.height, rectangle.bottom, g_Center.y + g_Radius.y)
+		|| dae::IsYBetween(rectangle.bottom + rectangle.height, rectangle.bottom, g_Center.y - g_Radius.y) 
 	};
 	if (IsBallXInRect && IsBallYInRect)// if the ball hits the rect
 	{
 		//if it hits on the left or right
-		if (PrevBallPos.y < g_BatRect.bottom + g_BatRect.height && PrevBallPos.y > g_BatRect.bottom)
+		if (PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom)
 		{
 			g_VelBallXValue = -g_VelBallXValue;
 			//if it hits on the right
-			if (PrevBallPos.x > g_BatRect.left && PrevBallPos.x > g_BatRect.left + g_BatRect.width)
+			if (PrevBallPos.x > rectangle.left && PrevBallPos.x > rectangle.left + rectangle.width)
 			{
-				g_Center.x = g_BatRect.left + g_BatRect.width + g_Radius.x;
+				g_Center.x = rectangle.left + rectangle.width + g_Radius.x;
 			}
 			//if it hits on the right
 			else
 			{
-				g_Center.x = g_BatRect.left - g_Radius.x;
+				g_Center.x = rectangle.left - g_Radius.x;
 			}
 		}
 		//if it hits on the top or bottom
-		if (PrevBallPos.x > g_BatRect.left  && PrevBallPos.x < g_BatRect.left+ g_BatRect.width)
+		if (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left+ rectangle.width)
 		{
 			g_VelBallYValue = -g_VelBallYValue;
 			//if it hits on the top
-			if (PrevBallPos.y > g_BatRect.bottom && PrevBallPos.y > g_BatRect.bottom + g_BatRect.height)
+			if (PrevBallPos.y > rectangle.bottom && PrevBallPos.y > rectangle.bottom + rectangle.height)
 			{
-				g_Center.y = g_BatRect.bottom + g_BatRect.height + g_Radius.y;
+				g_Center.y = rectangle.bottom + rectangle.height + g_Radius.y;
 			}
 			//if it hits on the bottom
 			else
 			{
-				g_Center.y = g_BatRect.bottom - g_Radius.y;
+				g_Center.y = rectangle.bottom - g_Radius.y;
 			}
 		}
 
+		return true;
 	}
+
+	return false;
 
 }
 void KeepBallInScreen()
@@ -445,6 +566,7 @@ void DrawLaser()
 
 
 }
+
 #pragma endregion gameImplementations
 
 #pragma region coreImplementations
@@ -832,7 +954,7 @@ void DrawTexture( const Texture & texture, const Rectf & vertexRect, const Rectf
 		vertexTop = vertexBottom + (vertexRect.height);
 
 	}
-	
+
 	// Tell opengl which texture we will use
 	glBindTexture( GL_TEXTURE_2D, texture.id );
 	glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
