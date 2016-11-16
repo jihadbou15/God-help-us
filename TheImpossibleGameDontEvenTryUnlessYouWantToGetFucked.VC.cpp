@@ -100,7 +100,7 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 // init values
 const Point2f g_BatDimens{100.0f,50.0f};
 const Point2f g_BatPos{g_WindowWidth/2 - g_BatDimens.x / 2 ,60.0f};
-float g_VelBatValue{300.0f};
+float g_VelBatValue{500.0f};
 float g_ColorR{0.0f};
 float g_ColorG{1.0f};
 float g_ColorB{0.0f};
