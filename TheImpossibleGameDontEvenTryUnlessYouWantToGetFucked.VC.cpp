@@ -303,6 +303,12 @@ void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
 	case SDLK_RIGHT:
 		g_BatVel = 0.0f;
 		break;
+	case SDLK_l:
+		 g_IsShooting = true;
+		break;
+	case SDLK_k:
+		g_IsShooting = false;
+		break;
 	}
 }
 void ProcessMouseMotionEvent( const SDL_MouseMotionEvent & e )
@@ -562,10 +568,9 @@ void DrawLaser()
 
 	if (g_IsShooting)
 	{
-		
+		DrawTexture(g_LaserTex, leftLaserPos);
 	}
-	Rectf laserStartPos{ leftLaserX + g_LeftCanonTex.width*scale- xCorrection,leftLaserY,g_LeftCanonLaserTex.width*scaleLaserPiece,g_LeftCanonLaserTex.height*scaleLaserPiece };
-	DrawTexture(g_LeftCanonLaserTex, laserStartPos);
+	
 
 
 }
