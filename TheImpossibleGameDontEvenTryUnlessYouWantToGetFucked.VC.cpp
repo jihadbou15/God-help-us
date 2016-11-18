@@ -563,17 +563,24 @@ void DrawLaser()
 	float xCorrection{100.0f};
 	int numberPieces{ 30 };
 
-	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-	DrawTexture(g_LeftCanonTex, leftLaserPos);
+	Rectf leftCanonPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
+	DrawTexture(g_LeftCanonTex, leftCanonPos);
 
+	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
 	if (g_IsShooting)
 	{
+		DrawTexture(g_LeftCanonLaserTex, leftLaserPos);
+
 		glMatrixMode(GL_TEXTURE);
 
+		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
 		glLoadIdentity();
-		glRotatef(45, 0, 0, 1);
+		glTranslatef(0.5, 0.5, 0.0);
+		glRotatef(5.0f, 0.0, 0.0, 1.0);
+		glTranslatef(-0.5, -0.5, 0.0);
 
 		glMatrixMode(GL_PROJECTION);
+	}
 	
 
 
