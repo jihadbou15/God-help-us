@@ -568,8 +568,12 @@ void DrawLaser()
 
 	if (g_IsShooting)
 	{
-		DrawTexture(g_LaserTex, leftLaserPos);
-	}
+		glMatrixMode(GL_TEXTURE);
+
+		glLoadIdentity();
+		glRotatef(45, 0, 0, 1);
+
+		glMatrixMode(GL_PROJECTION);
 	
 
 
@@ -622,7 +626,7 @@ void Initialize( )
 
 
 	// Initialize Projection matrix
-	glMatrixMode( GL_PROJECTION );
+	
 	glLoadIdentity( );
 	// Set the clipping (viewing) area's left, right, bottom and top
 	gluOrtho2D( 0, g_WindowWidth, 0, g_WindowHeight );
@@ -632,7 +636,7 @@ void Initialize( )
 	glViewport( 0, 0, int( g_WindowWidth ), int( g_WindowHeight ) );
 
 	//Initialize Modelview matrix
-	glMatrixMode( GL_MODELVIEW );
+	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity( );
 
 	// Enable color blending and use alpha blending
@@ -651,6 +655,7 @@ void Initialize( )
 	{
 		QuitOnTtfError( );
 	}
+	
 }
 void Run( )
 {
