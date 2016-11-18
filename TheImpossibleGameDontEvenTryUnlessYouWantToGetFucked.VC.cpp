@@ -68,7 +68,7 @@ SDL_Window* g_pWindow{ nullptr }; // The window we'll be rendering to
 SDL_GLContext g_pContext; // OpenGL context
 Uint32 g_MilliSeconds{};
 const Uint32 g_MaxElapsedTime{ 100 };
-#pragma endregion coreDeclarations
+#pragma endregion coreDeclarations;
 
 #pragma region gameDeclarations
 //Enum class
@@ -569,15 +569,20 @@ void DrawLaser()
 	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
 	if (g_IsShooting)
 	{
+		//leftLaserPos.left = ;
+		//leftLaserPos.bottom = ;
+		//leftLaserPos.width = ;
+		//leftLaserPos.height = ;
+
 		DrawTexture(g_LeftCanonLaserTex, leftLaserPos);
 
 		glMatrixMode(GL_TEXTURE);
 
 		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
-		glLoadIdentity();
-		glTranslatef(0.5, 0.5, 0.0);
+		//glLoadIdentity();
+		//glTranslatef(0.5, 0.5, 0.0);
 		glRotatef(5.0f, 0.0, 0.0, 1.0);
-		glTranslatef(-0.5, -0.5, 0.0);
+		//glTranslatef(-0.5, -0.5, 0.0);
 
 		glMatrixMode(GL_PROJECTION);
 	}
