@@ -176,7 +176,7 @@ int main(int argc, char* args[])
 
 	std::cout << "Choose difficulty level:  0 = easy , 1  = medium , 2 = hard , 3 = Daddy, 4 = Dead on arrival: ";
 	std::cin >> choice;
-
+	
 	while (choice < 0 && choice > 4)
 	{
 		std::cout << "not within range: Try again" << std::endl;
@@ -231,7 +231,7 @@ void InitGameResources()
 	TextureFromFile("Resources/bomb.png", g_BombTex);
 	TextureFromFile("Resources/boss.png", g_BossTex);
 	TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
-
+	
 	TextureFromFile("Resources/laser piece.png", g_LaserTex);
 	TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
 
@@ -245,19 +245,28 @@ void InitGameResources()
 
 void InitBricks(Rectf * pArray, ObjState *pState, int columns, int rows)
 {
+	int counter{};
+
 	for (int i = 0; i < rows; i++)
 	{
+		counter++;
 		for (int j = 0; j < columns; j++)
 		{
+			
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].width = g_BrickWidth;
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].height = g_BrickHeight;
-			pArray[dae::GetArrayIndex(i, j, g_Columns)].left = (g_BrickWidth / 2) + (j*g_BrickWidth);
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].left = (g_BrickWidth/counter) + (j*g_BrickWidth);
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].bottom = (g_WindowHeight - 256.0f) - (i*g_BrickHeight);
 			pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Running;
+			
 		}
+		if (counter == 2)
+		{
+			counter = 0;
 	}
 }
-void FreeGameResources()
+}
+void FreeGameResources( )
 {
 	DeleteTexture(g_BallTex);
 	DeleteTexture(g_BatTex);
@@ -273,7 +282,7 @@ void FreeGameResources()
 	DeleteTexture(g_RightCanonTex);
 	DeleteTexture(g_RightCanonLaserTex);
 
-
+	
 }
 void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
 {
@@ -289,9 +298,9 @@ void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
 		g_IsShooting = true;
 		break;
 	case SDLK_k:
-		g_IsShooting = false;
+		g_IsShooting =false;
 		break;
-
+	
 	}
 }
 void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
@@ -399,7 +408,7 @@ void UpdateBat(float elapsedSec)
 	{
 		g_BatRect.left = 0.0f;
 	}
-
+	
 }
 
 void DrawBall()
@@ -418,43 +427,60 @@ void DrawBall()
 void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 {
 	Color4f red{ 1.0f,0.0f,0.0f,1.0f };
-	Color4f yellow{ 1.0f,1.0f,0.0f,1.0f };
+	Color4f white{ 1.0f,1.0f,1.0f,1.0f };
 	Color4f green{ 0.0f,1.0f,0.0f,1.0f };
+	Color4f outline{ 0.0f,0.0f,0.0f,1.0f };
 
-	int rowsPerColor{ g_Rows / 3 };
+	int columnsPerColor{ g_Columns / 3 };
 
 	int ColorCounter{};
-	int RowCounter{};
+	int ColumnsCounter{};
+
 	for (int i = 0; i < rows; i++)
 	{
 		for (int j = 0; j < columns; j++)
 		{
-			if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
-			{
+			
+			
 				switch (ColorCounter)
 				{
 				case 0:
-					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
+					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
+					{
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
 					break;
 				case 1:
-					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], yellow);
+					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
+					{
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], white);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
 					break;
-				case 2:
-					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
+				case 2: 
+					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
+					{
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
 				default:
 					break;
 				}
+				
+				ColumnsCounter++;
+				if (ColumnsCounter >= columnsPerColor)
+				{
+					ColumnsCounter = 0;
+					ColorCounter++;
+				}
+				
+				
+		
 
-
-			}
-
+			
 		}
-		RowCounter++;
-		if (RowCounter >= rowsPerColor)
-		{
-			RowCounter = 0;
-			ColorCounter++;
-		}
+		ColorCounter = 0;
 	}
 }
 void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
@@ -468,9 +494,9 @@ void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 	g_Center.x += g_VelBallXValue*elapsedSec;
 
 	CollisionDetect(g_PrevBallPos, g_BatRect);
-
+	
 	bool hit{ false };
-
+	
 	for (int i = 0; i < g_Rows; i++)
 	{
 		for (int j = 0; j < g_Columns; j++)
@@ -510,21 +536,21 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 	{
 		angle += 360;
 	}
-
+	
 	return angle;
 }
 
 bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 {
 	bool IsBallXInRect
-	{
+	{ 
 		dae::IsXBetween(rectangle.left + rectangle.width, rectangle.left, g_Center.x + g_Radius.x)
-		|| dae::IsXBetween(rectangle.left + rectangle.width, rectangle.left, g_Center.x - g_Radius.x)
+		|| dae::IsXBetween(rectangle.left + rectangle.width, rectangle.left, g_Center.x - g_Radius.x) 
 	};
 	bool IsBallYInRect
-	{
+	{ 
 		dae::IsYBetween(rectangle.bottom + rectangle.height, rectangle.bottom, g_Center.y + g_Radius.y)
-		|| dae::IsYBetween(rectangle.bottom + rectangle.height, rectangle.bottom, g_Center.y - g_Radius.y)
+		|| dae::IsYBetween(rectangle.bottom + rectangle.height, rectangle.bottom, g_Center.y - g_Radius.y) 
 	};
 	if (IsBallXInRect && IsBallYInRect)// if the ball hits the rect
 	{
@@ -563,7 +589,7 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 			g_VelBallYValue = -g_VelBallYValue;
 			g_VelBallXValue = -g_VelBallXValue;
 		}
-
+		
 
 		return true;
 	}
@@ -613,7 +639,7 @@ void DrawLaser()
 		glEnable(GL_TEXTURE_2D);
 
 		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
-		
+
 
 		glPushMatrix();
 
@@ -642,7 +668,7 @@ void DrawLaser()
 		glDisable(GL_TEXTURE_2D);	
 
 	}
-
+	
 
 
 }
@@ -694,7 +720,7 @@ void Initialize()
 
 
 	// Initialize Projection matrix
-
+	
 	glLoadIdentity();
 	// Set the clipping (viewing) area's left, right, bottom and top
 	gluOrtho2D(0, g_WindowWidth, 0, g_WindowHeight);
@@ -723,7 +749,7 @@ void Initialize()
 	{
 		QuitOnTtfError();
 	}
-
+	
 }
 void Run()
 {
@@ -1025,7 +1051,7 @@ void DrawTexture(const Texture & texture, const Rectf & vertexRect, const Rectf 
 	float vertexTop{};
 	if (!(vertexRect.width > 0.0f && vertexRect.height > 0.0f)) // If no size specified use size of texture
 	{
-
+		
 		vertexRight = vertexLeft + (texture.width);
 		vertexTop = vertexBottom + (texture.height);
 	}
