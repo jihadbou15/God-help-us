@@ -244,15 +244,24 @@ void InitGameResources( )
 
 void InitBricks(Rectf * pArray,ObjState *pState, int columns, int rows)
 {
+	int counter{};
+
 	for (int i = 0; i < rows; i++)
 	{
+		counter++;
 		for (int j = 0; j < columns; j++)
 		{
+			
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].width = g_BrickWidth;
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].height = g_BrickHeight;
-			pArray[dae::GetArrayIndex(i, j, g_Columns)].left = (g_BrickWidth/2) + (j*g_BrickWidth);
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].left = (g_BrickWidth/counter) + (j*g_BrickWidth);
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].bottom = (g_WindowHeight - 256.0f) - (i*g_BrickHeight);
 			pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Running;
+			
+		}
+		if (counter == 2)
+		{
+			counter = 0;
 		}
 	}
 }
@@ -285,10 +294,10 @@ void ProcessKeyDownEvent( const SDL_KeyboardEvent  & e )
 		g_MoveRight = true;
 		break;
 	case SDLK_l:
-		g_IsShooting = false;
+		g_IsShooting = true;
 		break;
 	case SDLK_k:
-		g_IsShooting = true;
+		g_IsShooting =false;
 		break;
 	
 	}
@@ -302,12 +311,6 @@ void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
 		break;
 	case SDLK_RIGHT:
 		g_MoveRight = false;
-		break;
-	case SDLK_l:
-		 g_IsShooting = true;
-		break;
-	case SDLK_k:
-		g_IsShooting = false;
 		break;
 	}
 }
@@ -412,43 +415,60 @@ void DrawBall()
 void DrawBricks(Rectf *pArray,ObjState *pState, int rows, int columns)
 {
 	Color4f red{ 1.0f,0.0f,0.0f,1.0f };
-	Color4f yellow{ 1.0f,1.0f,0.0f,1.0f };
+	Color4f white{ 1.0f,1.0f,1.0f,1.0f };
 	Color4f green{ 0.0f,1.0f,0.0f,1.0f };
+	Color4f outline{ 0.0f,0.0f,0.0f,1.0f };
 
-	int rowsPerColor{ g_Rows / 3 };
+	int columnsPerColor{ g_Columns / 3 };
 
 	int ColorCounter{};
-	int RowCounter{};
+	int ColumnsCounter{};
+
 	for (int i = 0; i < rows; i++)
 	{
 		for (int j = 0; j < columns; j++)
 		{
-			if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
-			{
+			
+			
 				switch (ColorCounter)
 				{
 				case 0:
-					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
+					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
+					{
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
 					break;
 				case 1:
-					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], yellow);
+					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
+					{
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], white);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
 					break;
 				case 2: 
-					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
+					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
+					{
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
 				default:
 					break;
 				}
 				
+				ColumnsCounter++;
+				if (ColumnsCounter >= columnsPerColor)
+				{
+					ColumnsCounter = 0;
+					ColorCounter++;
+				}
 				
-			}
+			
+		
+
 			
 		}
-		RowCounter++;
-		if (RowCounter >= rowsPerColor)
-		{
-			RowCounter = 0;
-			ColorCounter++;
-		}
+		ColorCounter = 0;
 	}
 }
 void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
