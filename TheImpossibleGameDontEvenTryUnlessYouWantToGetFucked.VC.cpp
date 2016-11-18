@@ -164,8 +164,6 @@ Texture g_RightCanonLaserTex{};
 //laser var
 bool g_IsShooting{ false };
 float g_Angle{ 0.0f };
-float g_Move{ 0.25f };
-
 
 #pragma endregion gameDeclarations
 
@@ -608,7 +606,7 @@ void DrawLaser()
 	Rectf leftCanonPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
 	DrawTexture(g_LeftCanonTex, leftCanonPos);
 
-	Rectf leftLaserPos{ g_WindowWidth/2, g_WindowHeight/2,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
+	Rectf leftLaserPos{ g_WindowWidth/2- g_LeftCanonLaserTex.width/2, g_WindowHeight/2- g_LeftCanonLaserTex.height/2 ,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
 	if (g_IsShooting)
 	{
 
@@ -619,9 +617,9 @@ void DrawLaser()
 
 		glPushMatrix();
 
-		glTranslatef(+g_Move, +g_Move, 0.0f);
+		glTranslatef(+0.0f, +0.0f, 0.0f);
 		glRotatef(g_Angle, 0.0f, 0.0f, 1.0f);
-		glTranslatef(-g_Move, -g_Move, 0.0f);
+		glTranslatef(-0.0f, -0.0f, 0.0f);
 		
 		glBegin(GL_QUADS);
 		
