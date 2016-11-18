@@ -176,28 +176,28 @@ int main( int argc, char* args[] )
 	std::cout << "Choose difficulty level:  0 = easy , 1  = medium , 2 = hard , 3 = Daddy, 4 = Dead on arrival: ";
 	std::cin >> choice;
 	
-	while (choice < 0 || choice > 4);
+	while (choice < 0 && choice > 4)
 	{
 		std::cout << "not within range: Try again" << std::endl;
 		std::cin >> choice;
 
-	}
+	};
 
 	switch (choice)
 	{
 	case 0: g_Rows = 3;
 		g_GameDiff = Diff(choice);
 		break;
-	case 1: g_Rows = 5;
+	case 1: g_Rows = 6;
 		g_GameDiff = Diff(choice);
 		break;
-	case 2: g_Rows = 8;
+	case 2: g_Rows = 9;
 		g_GameDiff = Diff(choice);
 		break;
-	case 3: g_Rows = 11;
+	case 3: g_Rows = 12;
 		g_GameDiff = Diff(choice);
 		break;
-	case 4: g_Rows = 17;
+	case 4: g_Rows = 18;
 		g_GameDiff = Diff(choice);
 		break;
 	}
@@ -215,7 +215,7 @@ int main( int argc, char* args[] )
 	Cleanup( );
 
 	delete[] bricks;
-
+	delete[] bricksState;
 	return 0;
 }
 
@@ -298,10 +298,10 @@ void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
 	switch (e.keysym.sym)
 	{
 	case SDLK_LEFT:
-		g_BatVel = 0.0f;
+		g_MoveLeft = false;
 		break;
 	case SDLK_RIGHT:
-		g_BatVel = 0.0f;
+		g_MoveRight = false;
 		break;
 	case SDLK_l:
 		 g_IsShooting = true;
@@ -374,13 +374,16 @@ void UpdateBat(float elapsedSec)
 	if (g_MoveLeft)
 	{
 		g_BatVel = -g_VelBatValue;
-		g_MoveLeft = false;
 	}
 	else if (g_MoveRight)
 	{
 		g_BatVel = g_VelBatValue;
-		g_MoveRight = false;
 	}
+	else if (!g_MoveLeft && !g_MoveRight)
+	{
+		g_BatVel = 0;
+	}
+
 	//keep bat in screen
 	if (g_BatRect.left + g_BatRect.width> g_WindowWidth)
 	{
@@ -408,19 +411,43 @@ void DrawBall()
 
 void DrawBricks(Rectf *pArray,ObjState *pState, int rows, int columns)
 {
-	Color4f color{ 1.0f,0.0f,0.0f,1.0f };
-	Color4f outline{ 1.0f,1.0f,1.0f,1.0f };
+	Color4f red{ 1.0f,0.0f,0.0f,1.0f };
+	Color4f yellow{ 1.0f,1.0f,0.0f,1.0f };
+	Color4f green{ 0.0f,1.0f,0.0f,1.0f };
 
+	int rowsPerColor{ g_Rows / 3 };
+
+	int ColorCounter{};
+	int RowCounter{};
 	for (int i = 0; i < rows; i++)
 	{
 		for (int j = 0; j < columns; j++)
 		{
 			if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
-{
-				dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)],color);
-				dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+			{
+				switch (ColorCounter)
+				{
+				case 0:
+					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
+					break;
+				case 1:
+					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], yellow);
+					break;
+				case 2: 
+					dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
+				default:
+					break;
+				}
+				
+				
 			}
 			
+		}
+		RowCounter++;
+		if (RowCounter >= rowsPerColor)
+		{
+			RowCounter = 0;
+			ColorCounter++;
 		}
 	}
 }
@@ -456,6 +483,7 @@ void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 
 	KeepBallInScreen();
 }
+
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 {
 	//caculate angle
@@ -510,7 +538,7 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 			}
 		}
 		//if it hits on the top or bottom
-		if (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left+ rectangle.width)
+		else if (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left+ rectangle.width)
 		{
 			g_VelBallYValue = -g_VelBallYValue;
 			//if it hits on the top
@@ -524,6 +552,12 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 				g_Center.y = rectangle.bottom - g_Radius.y;
 			}
 		}
+		else if ((PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom) && (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left + rectangle.width))
+		{
+			g_VelBallYValue = -g_VelBallYValue;
+			g_VelBallXValue = -g_VelBallXValue;
+		}
+		
 
 		return true;
 	}
