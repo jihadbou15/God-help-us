@@ -603,10 +603,7 @@ void DrawLaser()
 	Rectf leftLaserPos{ leftLaserX,leftLaserY,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
 	if (g_IsShooting)
 	{
-		//leftLaserPos.left = ;
-		//leftLaserPos.bottom = ;
-		//leftLaserPos.width = ;
-		//leftLaserPos.height = ;
+	
 
 		DrawTexture(g_LeftCanonLaserTex, leftLaserPos);
 
@@ -614,9 +611,9 @@ void DrawLaser()
 
 		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
 		//glLoadIdentity();
-		//glTranslatef(0.5, 0.5, 0.0);
+		glTranslatef(0.5, 0.5, 0.0);
 		glRotatef(5.0f, 0.0, 0.0, 1.0);
-		//glTranslatef(-0.5, -0.5, 0.0);
+		glTranslatef(-0.5, -0.5, 0.0);
 
 		glMatrixMode(GL_PROJECTION);
 	}
@@ -997,8 +994,8 @@ void DrawTexture( const Texture & texture, const Rectf & vertexRect, const Rectf
 	}
 
 	// Determine vertex coordinates
-	float vertexLeft{ vertexRect.left };
-	float vertexBottom{ vertexRect.bottom };
+	float vertexLeft{ vertexRect.left};
+	float vertexBottom{ vertexRect.bottom};
 	float vertexRight{};
 	float vertexTop{};
 	if ( !( vertexRect.width > 0.0f && vertexRect.height > 0.0f ) ) // If no size specified use size of texture
@@ -1021,19 +1018,21 @@ void DrawTexture( const Texture & texture, const Rectf & vertexRect, const Rectf
 	// Draw
 	glEnable( GL_TEXTURE_2D );
 	{
+		float radius{};
+		radius = sqrt(pow( vertexRect.left - ((vertexRect.left + vertexRect.width) / 2),2) + pow( vertexRect.bottom - ((vertexRect.bottom + vertexRect.height) / 2),2));
 		glBegin( GL_QUADS );
 		{
 			glTexCoord2f( textLeft, textBottom);
-			glVertex2f( vertexLeft, vertexBottom );
+			glVertex2f( vertexLeft + cos(5.0f)*radius, vertexBottom + cos(5.0f)*radius);
 
 			glTexCoord2f( textLeft, textTop );
-			glVertex2f( vertexLeft, vertexTop );
+			glVertex2f( vertexLeft - cos(5.0f)*radius, vertexTop + sin(5.0f)*radius);
 
 			glTexCoord2f( textRight, textTop );
-			glVertex2f( vertexRight, vertexTop );
+			glVertex2f( vertexRight - cos(5.0f)*radius, vertexTop - sin(5.0f)*radius);
 
 			glTexCoord2f( textRight, textBottom );
-			glVertex2f( vertexRight, vertexBottom );
+			glVertex2f( vertexRight + cos(5.0f)*radius , vertexBottom - sin(5.0f)*radius);
 		}
 		glEnd( );
 	}
