@@ -164,7 +164,10 @@ Texture g_RightCanonBaseTex{};
 
 //laser var
 bool g_IsShootingRight{ false };
+bool g_IsShootingRight2{ false };
 bool g_IsShootingLeft{ false };
+bool g_IsShootingLeft2{ false };
+bool g_IsShootingLeft3{ false };
 float g_TotalElapsedTime{};
 #pragma endregion gameDeclarations
 
@@ -610,63 +613,63 @@ void DrawCanon()
 	float correction{ 15.0f };
 	float correction2{ 2.0f };
 
-	float leftCanonX{ 0.0f };
-	float leftCanonY{ g_WindowHeight / 3 };
-	Rectf leftCanon{ leftCanonX + xOffset,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-	Point2f movePivotLeft{ leftCanon.left + leftCanon.width / 2 ,leftCanon.bottom + leftCanon.height / 2 + correction*scale };
-	float angleLeft{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2) };
-	Rectf leftLaserPos{ leftCanonX + xOffset + g_LeftCanonTex.width / 4 * scale ,leftCanonY + correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
-	Rectf leftCanonPos{ leftCanonX + xOffset,leftCanonY,g_LeftCanonBaseTex.width*scale,g_LeftCanonBaseTex.height*scale };
-
-	float RightCanonX{ g_WindowWidth-g_RightCanonTex.width*scale };
-	float RightCanonY{ g_WindowHeight / 3 };
-	Rectf RightCanon{ RightCanonX - xOffset*1.5f*scale ,RightCanonY,g_RightCanonTex.width*scale,g_RightCanonTex.height*scale };
-	Point2f movePivotRight{ RightCanon.left + RightCanon.width / 2 + 18.0f*scale ,RightCanon.bottom + RightCanon.height / 2 + correction*scale };
-	float angleRight{   CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2) };
-	Rectf RightLaserPos{   RightCanonX - g_RightCanonLaserTex.width*scale -  xOffset + 3*g_RightCanonTex.width/4* scale ,RightCanonY + correction2*scale ,g_RightCanonLaserTex.width*scale,g_RightCanonLaserTex.height*scale };
-	Rectf RightCanonPos{   RightCanonX -  xOffset ,RightCanonY,g_RightCanonBaseTex.width*scale,g_RightCanonBaseTex.height*scale };
-	
-	float angleMax{40.0f};
-	float angleMax2{20.0f};
-
-	//stop canon from turning too much
-	if (angleLeft < -angleMax)
-	{
-		angleLeft = -angleMax;
-	}
-	else if (angleLeft > -angleMax2)
-	{
-		angleLeft = -angleMax2;
-	}
-	
-	if (angleRight > angleMax)
-	{
-		angleRight = angleMax;
-	}
-	else if (angleRight < angleMax2)
-	{
-		angleRight = 20.0f;
-	}
-
-	//draw the moving canon
-	RotateTexture(g_LeftCanonTex, leftCanon,angleLeft,movePivotLeft);
-	RotateTexture(g_RightCanonTex, RightCanon, angleRight, movePivotRight);
 	
 
-	//draw laser if active
-	if (g_IsShootingLeft)
+	for (int i{}; i < 3; i++)
 	{
-		RotateTexture(g_LeftCanonLaserTex,leftLaserPos, angleLeft, movePivotLeft);
+		float leftCanonX{ 0.0f };
+		float leftCanonY{ 400.0f };
+		leftCanonY -= i*150.0f;
+		Rectf leftCanon{ leftCanonX + xOffset,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
+		Point2f movePivotLeft{ leftCanon.left + leftCanon.width / 2 ,leftCanon.bottom + leftCanon.height / 2 + correction*scale };
+		float angleLeft{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2) };
+		Rectf leftLaserPos{ leftCanonX + xOffset + g_LeftCanonTex.width / 4 * scale ,leftCanonY + correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
+		Rectf leftCanonPos{ leftCanonX + xOffset,leftCanonY,g_LeftCanonBaseTex.width*scale,g_LeftCanonBaseTex.height*scale };
+	
+		//draw the moving canon
+		
+		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft, movePivotLeft);
+		//draw laser if active
+		if (g_IsShootingLeft)
+		{
+			RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft, movePivotLeft);
+		}
+		if (g_IsShootingLeft2)
+		{
+			RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft, movePivotLeft);
+		}
+		if (g_IsShootingLeft3)
+		{
+			RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft, movePivotLeft);
+		}
+		//draw canonbase
+		DrawTexture(g_LeftCanonBaseTex, leftCanonPos);	
 	}
 
-	if (g_IsShootingRight)
+	
+	for (int i{}; i < 2; i++)
 	{
-		RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
+		float RightCanonX{ g_WindowWidth - g_RightCanonTex.width*scale };
+		float RightCanonY{ 300.0f };
+		RightCanonY -= i*150.0f;
+		Rectf RightCanon{ RightCanonX - xOffset*1.5f*scale ,RightCanonY,g_RightCanonTex.width*scale,g_RightCanonTex.height*scale };
+		Point2f movePivotRight{ RightCanon.left + RightCanon.width / 2 + 18.0f*scale ,RightCanon.bottom + RightCanon.height / 2 + correction*scale };
+		float angleRight{ CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2) };
+		Rectf RightLaserPos{ RightCanonX - g_RightCanonLaserTex.width*scale - xOffset + 3 * g_RightCanonTex.width / 4 * scale ,RightCanonY + correction2*scale ,g_RightCanonLaserTex.width*scale,g_RightCanonLaserTex.height*scale };
+		Rectf RightCanonPos{ RightCanonX - xOffset ,RightCanonY,g_RightCanonBaseTex.width*scale,g_RightCanonBaseTex.height*scale };
+
+		RotateTexture(g_RightCanonTex, RightCanon, angleRight, movePivotRight);
+		if (g_IsShootingRight)
+		{
+			RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
+		}
+		if (g_IsShootingRight2)
+		{
+			RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
+		}
+		DrawTexture(g_RightCanonBaseTex, RightCanonPos);
 	}
 
-
-	DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
-	DrawTexture(g_RightCanonBaseTex, RightCanonPos);
 }
 void UpdateCanon(float elapsedTime)
 {
@@ -680,6 +683,25 @@ void UpdateCanon(float elapsedTime)
 	{
 		g_IsShootingLeft = false;
 	}
+
+	if (g_TotalElapsedTime == 8.0f)
+	{
+		g_IsShootingLeft2 = true;
+	}
+	if (g_TotalElapsedTime == 3.0f)
+	{
+		g_IsShootingLeft2 = false;
+	}
+
+	if (g_TotalElapsedTime == 4.0f)
+	{
+		g_IsShootingLeft3 = true;
+	}
+	if (g_TotalElapsedTime == 9.0f)
+	{
+		g_IsShootingLeft3 = false;
+	}
+
 	if (g_TotalElapsedTime == 7.5f)
 	{
 		g_IsShootingRight = true;
@@ -687,6 +709,14 @@ void UpdateCanon(float elapsedTime)
 	if (g_TotalElapsedTime == 2.5f)
 	{
 		g_IsShootingRight = false;
+	}
+	if (g_TotalElapsedTime == 1.5f)
+	{
+		g_IsShootingRight2 = true;
+	}
+	if (g_TotalElapsedTime == 6.5f)
+	{
+		g_IsShootingRight2 = false;
 	}
 }
 
