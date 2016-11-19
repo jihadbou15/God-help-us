@@ -613,8 +613,19 @@ void DrawCanon()
 	float correction2{ 2.0f };
 	float movePivotX{ leftCanon.left + leftCanon.width/2 };
 	float movePivotY{ leftCanon.bottom + leftCanon.height / 2 + correction*scale };
-	float angle{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left, leftCanon.bottom + leftCanon.height / 2 )};
+	float angle{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left+leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2 )};
 	
+	//stop canon from turning too much
+	if (angle < -40.0f ) 
+	{
+		angle = -40.0f;
+	}
+	else if (angle > -20.0f) 
+	{
+		angle = -20.0f;
+	}
+
+	//do transformations of canon
 	glMatrixMode(GL_MODELVIEW);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, g_LeftCanonTex.id);
@@ -641,10 +652,11 @@ void DrawCanon()
 	glDisable(GL_TEXTURE_2D);
 	glMatrixMode(GL_PROJECTION);
 
+
 	Rectf leftLaserPos{ leftCanonX + g_LeftCanonTex.width/4*scale ,leftCanonY+correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
 	if (g_IsShooting)
 	{
-
+		//do transformations of laser
 		glMatrixMode(GL_MODELVIEW);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
