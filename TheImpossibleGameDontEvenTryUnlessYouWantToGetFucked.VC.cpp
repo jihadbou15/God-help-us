@@ -108,6 +108,8 @@ void DrawCanon();
 void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
+void RotateTexture(Texture texture,Rectf texturePos, float angle, Point2f Pivot);
+
 
 
 // Variables
@@ -231,7 +233,7 @@ void InitGameResources()
 	TextureFromFile("Resources/left canon base.png", g_LeftCanonBaseTex);
 	TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
 	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
-	TextureFromFile("Resources/left canon base.png", g_LeftCanonBaseTex);
+	TextureFromFile("Resources/right canon base.png", g_RightCanonBaseTex);
 	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
 	TextureFromFile("Resources/right canon laser.png", g_RightCanonLaserTex);
 
@@ -606,87 +608,90 @@ void KeepBallInScreen()
 void DrawCanon()
 {
 	float scale{.5f};
+	float xOffset{ -40.0f};
+
+	//for better texture alignment
+	float correction{ 15.0f };
+	float correction2{ 2.0f };
+
 	float leftCanonX{ 0.0f };
 	float leftCanonY{ g_WindowHeight / 3 };
-	Rectf leftCanon{ leftCanonX,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-	float correction{15.0f};
-	float correction2{ 2.0f };
-	float movePivotX{ leftCanon.left + leftCanon.width/2 };
-	float movePivotY{ leftCanon.bottom + leftCanon.height / 2 + correction*scale };
-	float angle{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left+leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2 )};
-	
+	Rectf leftCanon{ leftCanonX + xOffset,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
+	Point2f movePivotLeft{ leftCanon.left + leftCanon.width / 2 ,leftCanon.bottom + leftCanon.height / 2 + correction*scale };
+	float angleLeft{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2) };
+	Rectf leftLaserPos{ leftCanonX + xOffset + g_LeftCanonTex.width / 4 * scale ,leftCanonY + correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
+	Rectf leftCanonPos{ leftCanonX + xOffset,leftCanonY,g_LeftCanonBaseTex.width*scale,g_LeftCanonBaseTex.height*scale };
+
+	float RightCanonX{ g_WindowWidth-g_RightCanonTex.width*scale };
+	float RightCanonY{ g_WindowHeight / 3 };
+	Rectf RightCanon{ RightCanonX - xOffset*1.5f*scale ,RightCanonY,g_RightCanonTex.width*scale,g_RightCanonTex.height*scale };
+	Point2f movePivotRight{ RightCanon.left + RightCanon.width / 2 + 18.0f*scale ,RightCanon.bottom + RightCanon.height / 2 + correction*scale };
+	float angleRight{   CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2) };
+	Rectf RightLaserPos{   RightCanonX - g_RightCanonLaserTex.width*scale -  xOffset + 3*g_RightCanonTex.width/4* scale ,RightCanonY + correction2*scale ,g_RightCanonLaserTex.width*scale,g_RightCanonLaserTex.height*scale };
+	Rectf RightCanonPos{   RightCanonX -  xOffset ,RightCanonY,g_RightCanonBaseTex.width*scale,g_RightCanonBaseTex.height*scale };
+
 	//stop canon from turning too much
-	if (angle < -40.0f ) 
+	if (angleLeft < -40.0f ) 
 	{
-		angle = -40.0f;
+		angleLeft = -40.0f;
 	}
-	else if (angle > -20.0f) 
+	else if (angleLeft > -20.0f) 
 	{
-		angle = -20.0f;
+		angleLeft = -20.0f;
+	}
+	
+	if (angleRight > 40.0f)
+	{
+		angleRight = 40.0f;
+	}
+	else if (angleRight < 20.0f)
+	{
+		angleRight = 20.0f;
 	}
 
-	//do transformations of canon
+	//draw the moving canon
+	RotateTexture(g_LeftCanonTex, leftCanon,angleLeft,movePivotLeft);
+	RotateTexture(g_RightCanonTex, RightCanon, angleRight, movePivotRight);
+	
+
+	//draw laser if active
+	if (g_IsShooting)
+	{
+		RotateTexture(g_LeftCanonLaserTex,leftLaserPos, angleLeft, movePivotLeft);
+		RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
+	}
+
+	DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
+	DrawTexture(g_RightCanonBaseTex, RightCanonPos);
+}
+
+void RotateTexture(Texture texture, Rectf texturePos, float angle, Point2f Pivot)
+{
 	glMatrixMode(GL_MODELVIEW);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, g_LeftCanonTex.id);
+	glBindTexture(GL_TEXTURE_2D, texture.id);
 	glPushMatrix();
 
-	glTranslatef(movePivotX, movePivotY, 0.0f);
+	glTranslatef(Pivot.x, Pivot.y, 0.0f);
 	glRotatef(angle, 0.0f, 0.0f, 1.0f);
-	glTranslatef(-movePivotX, -movePivotY, 0.0f);
+	glTranslatef(-Pivot.x, -Pivot.y, 0.0f);
 
 	glBegin(GL_QUADS);
 
 	glTexCoord2i(0, 1);
-	glVertex2f(leftCanon.left, leftCanon.bottom);
+	glVertex2f(texturePos.left, texturePos.bottom);
 	glTexCoord2i(1, 1);
-	glVertex2f(leftCanon.left + leftCanon.width, leftCanon.bottom);
+	glVertex2f(texturePos.left + texturePos.width, texturePos.bottom);
 	glTexCoord2i(1, 0);
-	glVertex2f(leftCanon.left + leftCanon.width, leftCanon.bottom + leftCanon.height);
+	glVertex2f(texturePos.left + texturePos.width, texturePos.bottom + texturePos.height);
 	glTexCoord2i(0, 0);
-	glVertex2f(leftCanon.left, leftCanon.bottom + leftCanon.height);
+	glVertex2f(texturePos.left, texturePos.bottom + texturePos.height);
 
 	glEnd();
 
 	glPopMatrix();
 	glDisable(GL_TEXTURE_2D);
 	glMatrixMode(GL_PROJECTION);
-
-
-	Rectf leftLaserPos{ leftCanonX + g_LeftCanonTex.width/4*scale ,leftCanonY+correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
-	if (g_IsShooting)
-	{
-		//do transformations of laser
-		glMatrixMode(GL_MODELVIEW);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
-		glPushMatrix();
-
-		glTranslatef(movePivotX, movePivotY, 0.0f);
-		glRotatef(angle, 0.0f, 0.0f, 1.0f);
-		glTranslatef(-movePivotX, -movePivotY, 0.0f);
-
-		glBegin(GL_QUADS);
-
-		glTexCoord2i(0, 1);
-		glVertex2f(leftLaserPos.left, leftLaserPos.bottom);
-		glTexCoord2i(1, 1);
-		glVertex2f(leftLaserPos.left + leftLaserPos.width, leftLaserPos.bottom);
-		glTexCoord2i(1, 0);
-		glVertex2f(leftLaserPos.left + leftLaserPos.width, leftLaserPos.bottom + leftLaserPos.height);
-		glTexCoord2i(0, 0);
-		glVertex2f(leftLaserPos.left, leftLaserPos.bottom + leftLaserPos.height);
-
-		glEnd();
-
-		glPopMatrix();
-		glDisable(GL_TEXTURE_2D);
-		glMatrixMode(GL_PROJECTION);
-
-	}
-
-	Rectf leftCanonPos{ leftCanonX,leftCanonY,g_LeftCanonBaseTex.width*scale,g_LeftCanonBaseTex.height*scale };
-	DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
 }
 
 #pragma endregion gameImplementations
