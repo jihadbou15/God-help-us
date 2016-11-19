@@ -1,4 +1,4 @@
-// 1DAE06 - Bossuyt Niels
+// 1DAE06 - Bossuyt Niels , Jihad Bouhaiji
 
 #pragma region generalDirectives
 // SDL libs
@@ -32,7 +32,7 @@
 #pragma region windowInformation
 const float g_WindowWidth{ 1000.0f };
 const float g_WindowHeight{ 800.0f };
-const std::string g_WindowTitle{ "TheImpossibleGameDontEvenTryUnlessYouWantToGetFucked - Bossuyt, Niels- 1DAE06" };
+const std::string g_WindowTitle{ "TheImpossibleGameDontEvenTryUnlessYouWantToGetFucked - Bossuyt, Niels ; Jihad, Bouhaiji- 1DAE06" };
 bool g_IsVSyncOn{ true };
 #pragma endregion windowInformation
 
@@ -83,6 +83,11 @@ enum class Diff
 	Easy, Medium, Hard, Daddy, DOA
 };
 
+enum class BossState
+{
+	Still, Moving, Shooting
+};
+
 // Functions
 void InitGameResources();
 void InitBricks(Rectf *pArray, ObjState *pState, int columns, int rows);
@@ -111,6 +116,8 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 
 
 // Variables
+
+
 // init values
 const Point2f g_BatDimens{ 100.0f,50.0f };
 const Point2f g_BatPos{ g_WindowWidth / 2 - g_BatDimens.x / 2 ,60.0f };
@@ -145,6 +152,10 @@ Point2f g_PrevBallPos{};
 float g_VelBallYValue{ 300.0f };
 float g_VelBallXValue{ 300.0f };
 
+//Boss Var
+Rectf g_BossRect{};
+BossState g_Boss{};
+Rectf Laser[]
 
 //Texture var
 Texture g_BallTex{};
@@ -223,22 +234,83 @@ int main(int argc, char* args[])
 #pragma region gameImplementations
 void InitGameResources()
 {
-	TextureFromFile("Resources/ball.png", g_BallTex);
-	TextureFromFile("Resources/bat base.png", g_BatTex);
-	TextureFromFile("Resources/bat dead.png", g_deadBatTex);
-
-	TextureFromFile("Resources/danger.png", g_dangerTex);
-	TextureFromFile("Resources/bomb.png", g_BombTex);
-	TextureFromFile("Resources/boss.png", g_BossTex);
-	TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
 	
-	TextureFromFile("Resources/laser piece.png", g_LaserTex);
-	TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
+	bool result = TextureFromFile("Resources/ball.png", g_BallTex);
+	if (!result)
+	{
+		std::cout << "ball.png failed to load." << std::endl;
+	}
+	result = TextureFromFile("Resources/bat base.png", g_BatTex);
+	if (!result)
+	{
+		std::cout << "bat base.png failed to load." << std::endl;
+	}
 
-	TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
-	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
-	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
-	TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
+	result = TextureFromFile("Resources/bat dead.png", g_deadBatTex);
+	if (!result)
+	{
+		std::cout << "bat dead.png failed to load." << std::endl;
+	}
+	result = TextureFromFile("Resources/danger.png", g_dangerTex);
+	if (!result)
+	{
+		std::cout << "danger.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/bomb.png", g_BombTex);
+	if (!result)
+	{
+		std::cout << "bomb.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/boss.png", g_BossTex);
+	if (!result)
+	{
+		std::cout << "boss.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
+	if (!result)
+	{
+		std::cout << "boss laser .png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/laser piece.png", g_LaserTex);
+	if (!result)
+	{
+		std::cout << "laser piece.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
+	if (!result)
+	{
+		std::cout << "laser piece boss.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
+	if (!result)
+	{
+		std::cout << "left canon.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
+	if (!result)
+	{
+		std::cout << "left canon laser.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/right canon.png", g_RightCanonTex);
+	if (!result)
+	{
+		std::cout << "right canon.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
+	if (!result)
+	{
+		std::cout << "right canon laser.png failed to load." << std::endl;
+	}
+
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -584,7 +656,7 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 				g_Center.y = rectangle.bottom - g_Radius.y;
 			}
 		}
-		else if ((PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom) && (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left + rectangle.width))
+		else if ((PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom) || (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left + rectangle.width))
 		{
 			g_VelBallYValue = -g_VelBallYValue;
 			g_VelBallXValue = -g_VelBallXValue;
