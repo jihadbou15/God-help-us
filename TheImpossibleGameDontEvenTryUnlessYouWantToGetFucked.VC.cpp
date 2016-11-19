@@ -104,7 +104,7 @@ void Draw();
 void DrawBat();
 void DrawBall();
 void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns);
-void DrawLaser();
+void DrawCanon();
 void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
@@ -151,20 +151,17 @@ Texture g_BallTex{};
 Texture g_BatTex{};
 Texture g_BombTex{};
 Texture g_BossTex{};
-Texture g_BossWithLaserTex{};
 Texture g_dangerTex{};
 Texture g_deadBatTex{};
-Texture g_LaserTex{};
-Texture g_LaserBossTex{};
 Texture g_LeftCanonTex{};
 Texture g_RightCanonTex{};
 Texture g_LeftCanonLaserTex{};
 Texture g_RightCanonLaserTex{};
+Texture g_LeftCanonBaseTex{};
+Texture g_RightCanonBaseTex{};
 
 //laser var
 bool g_IsShooting{ false };
-float g_Angle{ 0.0f };
-
 #pragma endregion gameDeclarations
 
 
@@ -230,15 +227,13 @@ void InitGameResources()
 	TextureFromFile("Resources/danger.png", g_dangerTex);
 	TextureFromFile("Resources/bomb.png", g_BombTex);
 	TextureFromFile("Resources/boss.png", g_BossTex);
-	TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
-	
-	TextureFromFile("Resources/laser piece.png", g_LaserTex);
-	TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
 
+	TextureFromFile("Resources/left canon base.png", g_LeftCanonBaseTex);
 	TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
 	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
+	TextureFromFile("Resources/left canon base.png", g_LeftCanonBaseTex);
 	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
-	TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
+	TextureFromFile("Resources/right canon laser.png", g_RightCanonLaserTex);
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -272,15 +267,14 @@ void FreeGameResources( )
 	DeleteTexture(g_BatTex);
 	DeleteTexture(g_BombTex);
 	DeleteTexture(g_BossTex);
-	DeleteTexture(g_BossWithLaserTex);
 	DeleteTexture(g_dangerTex);
 	DeleteTexture(g_deadBatTex);
-	DeleteTexture(g_LaserTex);
-	DeleteTexture(g_LaserBossTex);
 	DeleteTexture(g_LeftCanonTex);
 	DeleteTexture(g_LeftCanonLaserTex);
 	DeleteTexture(g_RightCanonTex);
 	DeleteTexture(g_RightCanonLaserTex);
+	DeleteTexture(g_LeftCanonBaseTex);
+	DeleteTexture(g_RightCanonBaseTex);
 
 	
 }
@@ -313,17 +307,6 @@ void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
 	case SDLK_RIGHT:
 		g_MoveRight = false;
 		break;
-	case SDLK_1:
-		g_Angle += 30.0f;
-		break;
-	case SDLK_2:
-		g_Angle += 60.0f;
-		break;
-	case SDLK_3:
-		g_Angle += 90.0f;
-		break;
-
-
 	}
 }
 void ProcessMouseMotionEvent(const SDL_MouseMotionEvent & e)
@@ -373,7 +356,7 @@ void Draw()
 	DrawBat();
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
-	DrawLaser();
+	DrawCanon();
 
 }
 void DrawBat()
@@ -620,88 +603,78 @@ void KeepBallInScreen()
 		g_Center.x = g_Radius.x;
 	}
 }
-void DrawLaser()
+void DrawCanon()
 {
-	float scale{ 0.75f };
-	float leftLaserX{ 0.0f };
-	float leftLaserY{ g_WindowHeight / 3 };
-	float scaleLaserPiece{ 0.5f };
-	float xCorrection{ 100.0f };
-	int numberPieces{ 30 };
-
-	Rectf leftCanonPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-
-	g_Angle = - 180.0f + CalculateAngle(g_BatRect.left+ g_BatRect.width/2, g_BatRect.bottom+ g_BatRect.height/2, leftCanonPos.left, leftCanonPos.bottom+ leftCanonPos.height/2);
-
+	float scale{.5f};
+	float leftCanonX{ 0.0f };
+	float leftCanonY{ g_WindowHeight / 3 };
+	Rectf leftCanon{ leftCanonX,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
+	float correction{15.0f};
+	float correction2{ 2.0f };
+	float movePivotX{ leftCanon.left + leftCanon.width/2 };
+	float movePivotY{ leftCanon.bottom + leftCanon.height / 2 + correction*scale };
+	float angle{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left, leftCanon.bottom + leftCanon.height / 2 )};
+	
+	glMatrixMode(GL_MODELVIEW);
 	glEnable(GL_TEXTURE_2D);
-
 	glBindTexture(GL_TEXTURE_2D, g_LeftCanonTex.id);
-
 	glPushMatrix();
 
-	glTranslatef(-1.0f, -0.1f, 0.0f);
-	glRotatef(g_Angle, 0.0f, 0.0f, 1.0f);
-	glTranslatef(+1.0f, 0.1f, 0.0f);
+	glTranslatef(movePivotX, movePivotY, 0.0f);
+	glRotatef(angle, 0.0f, 0.0f, 1.0f);
+	glTranslatef(-movePivotX, -movePivotY, 0.0f);
 
 	glBegin(GL_QUADS);
 
 	glTexCoord2i(0, 1);
-	glVertex2f(leftCanonPos.left, leftCanonPos.bottom);
-
+	glVertex2f(leftCanon.left, leftCanon.bottom);
 	glTexCoord2i(1, 1);
-	glVertex2f(leftCanonPos.left + leftCanonPos.width, leftCanonPos.bottom);
-
+	glVertex2f(leftCanon.left + leftCanon.width, leftCanon.bottom);
 	glTexCoord2i(1, 0);
-	glVertex2f(leftCanonPos.left + leftCanonPos.width, leftCanonPos.bottom + leftCanonPos.height);
-
+	glVertex2f(leftCanon.left + leftCanon.width, leftCanon.bottom + leftCanon.height);
 	glTexCoord2i(0, 0);
-	glVertex2f(leftCanonPos.left, leftCanonPos.bottom + leftCanonPos.height);
+	glVertex2f(leftCanon.left, leftCanon.bottom + leftCanon.height);
 
 	glEnd();
 
 	glPopMatrix();
-
 	glDisable(GL_TEXTURE_2D);
+	glMatrixMode(GL_PROJECTION);
 
-	Rectf leftLaserPos{ g_WindowWidth/2- g_LeftCanonLaserTex.width/2, g_WindowHeight/2- g_LeftCanonLaserTex.height/2 ,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
+	Rectf leftLaserPos{ leftCanonX + g_LeftCanonTex.width/4*scale ,leftCanonY+correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
 	if (g_IsShooting)
 	{
 
+		glMatrixMode(GL_MODELVIEW);
 		glEnable(GL_TEXTURE_2D);
-
 		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
-
-
 		glPushMatrix();
 
-		glTranslatef(+0.0f, +0.0f, 0.0f);
-		glRotatef(g_Angle, 0.0f, 0.0f, 1.0f);
-		glTranslatef(-0.0f, -0.0f, 0.0f);
-		
+		glTranslatef(movePivotX, movePivotY, 0.0f);
+		glRotatef(angle, 0.0f, 0.0f, 1.0f);
+		glTranslatef(-movePivotX, -movePivotY, 0.0f);
+
 		glBegin(GL_QUADS);
-		
+
 		glTexCoord2i(0, 1);
 		glVertex2f(leftLaserPos.left, leftLaserPos.bottom);
-
 		glTexCoord2i(1, 1);
 		glVertex2f(leftLaserPos.left + leftLaserPos.width, leftLaserPos.bottom);
-
 		glTexCoord2i(1, 0);
 		glVertex2f(leftLaserPos.left + leftLaserPos.width, leftLaserPos.bottom + leftLaserPos.height);
-
 		glTexCoord2i(0, 0);
 		glVertex2f(leftLaserPos.left, leftLaserPos.bottom + leftLaserPos.height);
-	
+
 		glEnd();
 
 		glPopMatrix();
-
-		glDisable(GL_TEXTURE_2D);	
+		glDisable(GL_TEXTURE_2D);
+		glMatrixMode(GL_PROJECTION);
 
 	}
-	
 
-
+	Rectf leftCanonPos{ leftCanonX,leftCanonY,g_LeftCanonBaseTex.width*scale,g_LeftCanonBaseTex.height*scale };
+	DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
 }
 
 #pragma endregion gameImplementations
