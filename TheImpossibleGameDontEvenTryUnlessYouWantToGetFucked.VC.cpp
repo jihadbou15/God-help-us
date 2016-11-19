@@ -630,15 +630,15 @@ void DrawCanon()
 		
 		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft, movePivotLeft);
 		//draw laser if active
-		if (g_IsShootingLeft)
+		if (g_IsShootingLeft && leftCanonY == 400.0f)
 		{
 			RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft, movePivotLeft);
 		}
-		if (g_IsShootingLeft2)
+		if (g_IsShootingLeft2 && leftCanonY == 250.0f)
 		{
 			RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft, movePivotLeft);
 		}
-		if (g_IsShootingLeft3)
+		if (g_IsShootingLeft3 && leftCanonY == 100.0f)
 		{
 			RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft, movePivotLeft);
 		}
@@ -659,11 +659,11 @@ void DrawCanon()
 		Rectf RightCanonPos{ RightCanonX - xOffset ,RightCanonY,g_RightCanonBaseTex.width*scale,g_RightCanonBaseTex.height*scale };
 
 		RotateTexture(g_RightCanonTex, RightCanon, angleRight, movePivotRight);
-		if (g_IsShootingRight)
+		if (g_IsShootingRight && RightCanonY == 300.0f)
 		{
 			RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
 		}
-		if (g_IsShootingRight2)
+		if (g_IsShootingRight2 && RightCanonY == 150.0f)
 		{
 			RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
 		}
@@ -684,7 +684,7 @@ void UpdateCanon(float elapsedTime)
 		g_IsShootingLeft = false;
 	}
 
-	if (g_TotalElapsedTime == 8.0f)
+	if (g_TotalElapsedTime == 7.0f)
 	{
 		g_IsShootingLeft2 = true;
 	}
@@ -697,12 +697,12 @@ void UpdateCanon(float elapsedTime)
 	{
 		g_IsShootingLeft3 = true;
 	}
-	if (g_TotalElapsedTime == 9.0f)
+	if (g_TotalElapsedTime == 6.0f)
 	{
 		g_IsShootingLeft3 = false;
 	}
 
-	if (g_TotalElapsedTime == 7.5f)
+	if (g_TotalElapsedTime == 6.5f)
 	{
 		g_IsShootingRight = true;
 	}
@@ -710,11 +710,11 @@ void UpdateCanon(float elapsedTime)
 	{
 		g_IsShootingRight = false;
 	}
-	if (g_TotalElapsedTime == 1.5f)
+	if (g_TotalElapsedTime == 0.5f)
 	{
 		g_IsShootingRight2 = true;
 	}
-	if (g_TotalElapsedTime == 6.5f)
+	if (g_TotalElapsedTime == 5.5f)
 	{
 		g_IsShootingRight2 = false;
 	}
