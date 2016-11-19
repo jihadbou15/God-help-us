@@ -85,7 +85,7 @@ enum class Diff
 
 enum class BossState
 {
-	Still, Moving, Shooting
+	Still, Moving
 };
 
 // Functions
@@ -110,6 +110,7 @@ void DrawBat();
 void DrawBall();
 void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns);
 void DrawLaser();
+void DrawBoss();
 void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
@@ -153,9 +154,9 @@ float g_VelBallYValue{ 300.0f };
 float g_VelBallXValue{ 300.0f };
 
 //Boss Var
-Rectf g_BossRect{};
-BossState g_Boss{};
-Rectf Laser[]
+float g_BossWidth{256.0f};
+float g_BossHeight{213.0f};
+Rectf g_BossRect{(g_WindowWidth/2)-(g_BossWidth/2),g_WindowHeight-g_BossHeight, g_BossWidth,g_BossHeight};
 
 //Texture var
 Texture g_BallTex{};
@@ -328,7 +329,7 @@ void InitBricks(Rectf * pArray, ObjState *pState, int columns, int rows)
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].width = g_BrickWidth;
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].height = g_BrickHeight;
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].left = (g_BrickWidth/counter) + (j*g_BrickWidth);
-			pArray[dae::GetArrayIndex(i, j, g_Columns)].bottom = (g_WindowHeight - 256.0f) - (i*g_BrickHeight);
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].bottom = (g_WindowHeight - 200.0f) - (i*g_BrickHeight);
 			pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Running;
 			
 		}
@@ -446,7 +447,7 @@ void Draw()
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
 	DrawLaser();
-
+	DrawBoss();
 }
 void DrawBat()
 {
@@ -676,11 +677,6 @@ void KeepBallInScreen()
 		g_VelBallYValue = -g_VelBallYValue;
 		g_Center.y = g_WindowHeight - g_Radius.y;
 	}
-	if (g_Center.y - g_Radius.y < 0.0f)
-	{
-		g_VelBallYValue = -g_VelBallYValue;
-		g_Center.y = g_Radius.y;
-	}
 	if (g_Center.x + g_Radius.x > g_WindowWidth)
 	{
 		g_VelBallXValue = -g_VelBallXValue;
@@ -743,6 +739,12 @@ void DrawLaser()
 	
 
 
+}
+
+void DrawBoss()
+{
+
+	DrawTexture(g_BossTex, g_BossRect);
 }
 
 #pragma endregion gameImplementations
