@@ -630,7 +630,38 @@ void DrawLaser()
 	int numberPieces{ 30 };
 
 	Rectf leftCanonPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-	DrawTexture(g_LeftCanonTex, leftCanonPos);
+
+	g_Angle = - 180.0f + CalculateAngle(g_BatRect.left+ g_BatRect.width/2, g_BatRect.bottom+ g_BatRect.height/2, leftCanonPos.left, leftCanonPos.bottom+ leftCanonPos.height/2);
+
+	glEnable(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, g_LeftCanonTex.id);
+
+	glPushMatrix();
+
+	glTranslatef(-1.0f, -0.1f, 0.0f);
+	glRotatef(g_Angle, 0.0f, 0.0f, 1.0f);
+	glTranslatef(+1.0f, 0.1f, 0.0f);
+
+	glBegin(GL_QUADS);
+
+	glTexCoord2i(0, 1);
+	glVertex2f(leftCanonPos.left, leftCanonPos.bottom);
+
+	glTexCoord2i(1, 1);
+	glVertex2f(leftCanonPos.left + leftCanonPos.width, leftCanonPos.bottom);
+
+	glTexCoord2i(1, 0);
+	glVertex2f(leftCanonPos.left + leftCanonPos.width, leftCanonPos.bottom + leftCanonPos.height);
+
+	glTexCoord2i(0, 0);
+	glVertex2f(leftCanonPos.left, leftCanonPos.bottom + leftCanonPos.height);
+
+	glEnd();
+
+	glPopMatrix();
+
+	glDisable(GL_TEXTURE_2D);
 
 	Rectf leftLaserPos{ g_WindowWidth/2- g_LeftCanonLaserTex.width/2, g_WindowHeight/2- g_LeftCanonLaserTex.height/2 ,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
 	if (g_IsShooting)
