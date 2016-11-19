@@ -109,7 +109,7 @@ void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 void RotateTexture(Texture texture,Rectf texturePos, float angle, Point2f Pivot);
-
+void UpdateCanon(float elapsedTime);
 
 
 // Variables
@@ -163,7 +163,9 @@ Texture g_LeftCanonBaseTex{};
 Texture g_RightCanonBaseTex{};
 
 //laser var
-bool g_IsShooting{ false };
+bool g_IsShootingRight{ false };
+bool g_IsShootingLeft{ false };
+float g_TotalElapsedTime{};
 #pragma endregion gameDeclarations
 
 
@@ -290,13 +292,6 @@ void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
 	case SDLK_RIGHT:
 		g_MoveRight = true;
 		break;
-	case SDLK_l:
-		g_IsShooting = true;
-		break;
-	case SDLK_k:
-		g_IsShooting =false;
-		break;
-	
 	}
 }
 void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
@@ -350,6 +345,7 @@ void Update(float elapsedSec)
 {
 	UpdateBat(elapsedSec);
 	UpdateBall(elapsedSec, bricks, bricksState);
+	UpdateCanon(elapsedSec);
 }
 
 void Draw()
@@ -629,22 +625,25 @@ void DrawCanon()
 	float angleRight{   CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2) };
 	Rectf RightLaserPos{   RightCanonX - g_RightCanonLaserTex.width*scale -  xOffset + 3*g_RightCanonTex.width/4* scale ,RightCanonY + correction2*scale ,g_RightCanonLaserTex.width*scale,g_RightCanonLaserTex.height*scale };
 	Rectf RightCanonPos{   RightCanonX -  xOffset ,RightCanonY,g_RightCanonBaseTex.width*scale,g_RightCanonBaseTex.height*scale };
+	
+	float angleMax{40.0f};
+	float angleMax2{20.0f};
 
 	//stop canon from turning too much
-	if (angleLeft < -40.0f ) 
+	if (angleLeft < -angleMax)
 	{
-		angleLeft = -40.0f;
+		angleLeft = -angleMax;
 	}
-	else if (angleLeft > -20.0f) 
+	else if (angleLeft > -angleMax2)
 	{
-		angleLeft = -20.0f;
+		angleLeft = -angleMax2;
 	}
 	
-	if (angleRight > 40.0f)
+	if (angleRight > angleMax)
 	{
-		angleRight = 40.0f;
+		angleRight = angleMax;
 	}
-	else if (angleRight < 20.0f)
+	else if (angleRight < angleMax2)
 	{
 		angleRight = 20.0f;
 	}
@@ -655,14 +654,40 @@ void DrawCanon()
 	
 
 	//draw laser if active
-	if (g_IsShooting)
+	if (g_IsShootingLeft)
 	{
 		RotateTexture(g_LeftCanonLaserTex,leftLaserPos, angleLeft, movePivotLeft);
+	}
+
+	if (g_IsShootingRight)
+	{
 		RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
 	}
 
+
 	DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
 	DrawTexture(g_RightCanonBaseTex, RightCanonPos);
+}
+void UpdateCanon(float elapsedTime)
+{
+	g_TotalElapsedTime += elapsedTime;
+	g_TotalElapsedTime = (int(g_TotalElapsedTime*100) % 1000)/100.0f;
+	if (g_TotalElapsedTime == 5.0f)
+	{
+		g_IsShootingLeft = true;
+	}
+	if (g_TotalElapsedTime == 0.0f)
+	{
+		g_IsShootingLeft = false;
+	}
+	if (g_TotalElapsedTime == 7.5f)
+	{
+		g_IsShootingRight = true;
+	}
+	if (g_TotalElapsedTime == 2.5f)
+	{
+		g_IsShootingRight = false;
+	}
 }
 
 void RotateTexture(Texture texture, Rectf texturePos, float angle, Point2f Pivot)
