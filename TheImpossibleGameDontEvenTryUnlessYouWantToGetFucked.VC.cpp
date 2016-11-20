@@ -104,10 +104,13 @@ void Draw();
 void DrawBat();
 void DrawBall();
 void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns);
-void DrawLaser();
+void DrawCanon();
 void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
+void RotateTexture(Texture texture,Rectf texturePos, float angle, Point2f Pivot);
+void UpdateCanon(float elapsedTime);
+void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scale);
 
 
 // Variables
@@ -151,19 +154,29 @@ Texture g_BallTex{};
 Texture g_BatTex{};
 Texture g_BombTex{};
 Texture g_BossTex{};
-Texture g_BossWithLaserTex{};
 Texture g_dangerTex{};
 Texture g_deadBatTex{};
-Texture g_LaserTex{};
-Texture g_LaserBossTex{};
 Texture g_LeftCanonTex{};
 Texture g_RightCanonTex{};
 Texture g_LeftCanonLaserTex{};
 Texture g_RightCanonLaserTex{};
+Texture g_LeftCanonBaseTex{};
+Texture g_RightCanonBaseTex{};
 
 //laser var
-bool g_IsShooting{ false };
-float g_Angle{ 0.0f };
+const int g_LeftSize{3};
+bool g_IsShootingLeft[g_LeftSize]{};
+const int g_RightSize{ 2 };
+bool g_IsShootingRight[g_RightSize]{};
+float g_TotalElapsedTime{};
+bool g_WarningLeft[g_LeftSize]{};
+bool g_WarningRight[g_RightSize]{};
+bool g_LockAngleLeft[g_LeftSize]{};
+bool g_LockAngleRight[g_RightSize]{};
+Rectf g_SavedBatPosLeft[g_LeftSize]{};
+Rectf g_SavedBatPosRight[g_RightSize]{};
+
+
 
 #pragma endregion gameDeclarations
 
@@ -230,15 +243,13 @@ void InitGameResources()
 	TextureFromFile("Resources/danger.png", g_dangerTex);
 	TextureFromFile("Resources/bomb.png", g_BombTex);
 	TextureFromFile("Resources/boss.png", g_BossTex);
-	TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
-	
-	TextureFromFile("Resources/laser piece.png", g_LaserTex);
-	TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
 
+	TextureFromFile("Resources/left canon base.png", g_LeftCanonBaseTex);
 	TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
 	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
+	TextureFromFile("Resources/right canon base.png", g_RightCanonBaseTex);
 	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
-	TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
+	TextureFromFile("Resources/right canon laser.png", g_RightCanonLaserTex);
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -272,15 +283,14 @@ void FreeGameResources( )
 	DeleteTexture(g_BatTex);
 	DeleteTexture(g_BombTex);
 	DeleteTexture(g_BossTex);
-	DeleteTexture(g_BossWithLaserTex);
 	DeleteTexture(g_dangerTex);
 	DeleteTexture(g_deadBatTex);
-	DeleteTexture(g_LaserTex);
-	DeleteTexture(g_LaserBossTex);
 	DeleteTexture(g_LeftCanonTex);
 	DeleteTexture(g_LeftCanonLaserTex);
 	DeleteTexture(g_RightCanonTex);
 	DeleteTexture(g_RightCanonLaserTex);
+	DeleteTexture(g_LeftCanonBaseTex);
+	DeleteTexture(g_RightCanonBaseTex);
 
 	
 }
@@ -294,13 +304,6 @@ void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
 	case SDLK_RIGHT:
 		g_MoveRight = true;
 		break;
-	case SDLK_l:
-		g_IsShooting = true;
-		break;
-	case SDLK_k:
-		g_IsShooting =false;
-		break;
-	
 	}
 }
 void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
@@ -313,17 +316,6 @@ void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
 	case SDLK_RIGHT:
 		g_MoveRight = false;
 		break;
-	case SDLK_1:
-		g_Angle += 30.0f;
-		break;
-	case SDLK_2:
-		g_Angle += 60.0f;
-		break;
-	case SDLK_3:
-		g_Angle += 90.0f;
-		break;
-
-
 	}
 }
 void ProcessMouseMotionEvent(const SDL_MouseMotionEvent & e)
@@ -365,6 +357,7 @@ void Update(float elapsedSec)
 {
 	UpdateBat(elapsedSec);
 	UpdateBall(elapsedSec, bricks, bricksState);
+	UpdateCanon(elapsedSec);
 }
 
 void Draw()
@@ -373,7 +366,7 @@ void Draw()
 	DrawBat();
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
-	DrawLaser();
+	DrawCanon();
 
 }
 void DrawBat()
@@ -620,57 +613,202 @@ void KeepBallInScreen()
 		g_Center.x = g_Radius.x;
 	}
 }
-void DrawLaser()
+void DrawCanon()
 {
-	float scale{ 0.75f };
-	float leftLaserX{ 0.0f };
-	float leftLaserY{ g_WindowHeight / 3 };
-	float scaleLaserPiece{ 0.5f };
-	float xCorrection{ 100.0f };
-	int numberPieces{ 30 };
+	float scale{.5f};
+	float xOffset{ -40.0f};
+	float angleLeft[g_LeftSize]{};
+	float angleRight[g_RightSize]{};
+	
+	//for better texture alignment
+	float correction{ 15.0f };
+	float correction2{ 2.0f };
+	
+	//left caonons
+	for (int i{}; i < 3; i++)
+	{
+		float leftCanonX{ 0.0f };
+		float leftCanonY{ 400.0f };
+		leftCanonY -= i*150.0f;
+		Rectf leftCanon{ leftCanonX + xOffset,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
+		Point2f movePivotLeft{ leftCanon.left + leftCanon.width / 2 ,leftCanon.bottom + leftCanon.height / 2 + correction*scale };
+		Rectf leftLaserPos{ leftCanonX + xOffset + g_LeftCanonTex.width / 4 * scale ,leftCanonY + correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
+		Rectf leftCanonPos{ leftCanonX + xOffset,leftCanonY,g_LeftCanonBaseTex.width*scale,g_LeftCanonBaseTex.height*scale };
+		Rectf WarningPos{ leftCanonX+g_LeftCanonBaseTex.width*scale,leftCanonY,g_dangerTex.width*scale,g_dangerTex.height*scale };
+		angleLeft[i] = -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2);
+		if (g_LockAngleLeft[i])
+		{
+			angleLeft[i] = -180.0f + CalculateAngle(g_SavedBatPosLeft[i].left + g_SavedBatPosLeft[i].width / 2, g_SavedBatPosLeft[i].bottom + g_SavedBatPosLeft[i].height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2);
+		}
 
-	Rectf leftCanonPos{ leftLaserX,leftLaserY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
-	DrawTexture(g_LeftCanonTex, leftCanonPos);
+		//draw the moving canon
+		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft[i], movePivotLeft);
+		//draw laser if active
+		for (int i{}; i < g_LeftSize; i++)
+		{
+			if (g_WarningLeft[i] && leftCanonY == 400.0f - 150.0f*i)
+			{
+				DrawTexture(g_dangerTex, WarningPos);
+			}
+			if (g_IsShootingLeft[i] && leftCanonY == 400.0f-150.0f*i)
+			{
+				RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft[i], movePivotLeft);
+			}
+		}
+		//draw canonbase
+		DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
+		CollisionLaser(angleLeft[i],movePivotLeft.x, movePivotLeft.y,scale);
+	}
+	//right canons
+	for (int i{}; i < 2; i++)
+	{
+		float RightCanonX{ g_WindowWidth - g_RightCanonTex.width*scale };
+		float RightCanonY{ 300.0f };
+		RightCanonY -= i*150.0f;
+		Rectf RightCanon{ RightCanonX - xOffset*1.5f*scale ,RightCanonY,g_RightCanonTex.width*scale,g_RightCanonTex.height*scale };
+		Point2f movePivotRight{ RightCanon.left + RightCanon.width / 2 + 18.0f*scale ,RightCanon.bottom + RightCanon.height / 2 + correction*scale };
+		Rectf RightLaserPos{ RightCanonX - g_RightCanonLaserTex.width*scale - xOffset + 3 * g_RightCanonTex.width / 4 * scale ,RightCanonY + correction2*scale ,g_RightCanonLaserTex.width*scale,g_RightCanonLaserTex.height*scale };
+		Rectf RightCanonPos{ RightCanonX - xOffset ,RightCanonY,g_RightCanonBaseTex.width*scale,g_RightCanonBaseTex.height*scale };
+		Rectf WarningPos{RightCanonX,RightCanonY,g_dangerTex.width*scale,g_dangerTex.height*scale };
+		angleRight[i] = CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2);
+		if (g_LockAngleRight[i])
+		{
+			angleRight[i] = CalculateAngle(g_SavedBatPosRight[i].left + g_SavedBatPosRight[i].width / 2, g_SavedBatPosRight[i].bottom + g_SavedBatPosRight[i].height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2);
+		}
+		RotateTexture(g_RightCanonTex, RightCanon, angleRight[i], movePivotRight);
+		for (int i{}; i < g_RightSize; i++)
+		{
+			if (g_WarningRight[i] && RightCanonY == 300.0f - i*150.0f)
+			{
+				DrawTexture(g_dangerTex, WarningPos);
+			}
+			if (g_IsShootingRight[i] && RightCanonY == 300.0f-i*150.0f)
+			{
+				RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight[i], movePivotRight);
+			}
+		}
+		DrawTexture(g_RightCanonBaseTex, RightCanonPos);
+	}
 
-	Rectf leftLaserPos{ g_WindowWidth/2- g_LeftCanonLaserTex.width/2, g_WindowHeight/2- g_LeftCanonLaserTex.height/2 ,g_LeftCanonLaserTex.width,g_LeftCanonLaserTex.height };
-	if (g_IsShooting)
+}
+void UpdateCanon(float elapsedTime)
+{
+	g_TotalElapsedTime += elapsedTime;
+	g_TotalElapsedTime = (int(g_TotalElapsedTime*100) % 1000)/100.0f;
+	float triggersLeft[g_LeftSize]{2.0f,6.0f,9.0f};
+	float triggersRight[g_RightSize]{ 5.0f,3.0f };
+	float laserDuration{3.0f};
+	for (int i{}; i < g_LeftSize; i++)
 	{
 
-		glEnable(GL_TEXTURE_2D);
-
-		glBindTexture(GL_TEXTURE_2D, g_LeftCanonLaserTex.id);
-
-
-		glPushMatrix();
-
-		glTranslatef(+0.0f, +0.0f, 0.0f);
-		glRotatef(g_Angle, 0.0f, 0.0f, 1.0f);
-		glTranslatef(-0.0f, -0.0f, 0.0f);
-		
-		glBegin(GL_QUADS);
-		
-		glTexCoord2i(0, 1);
-		glVertex2f(leftLaserPos.left, leftLaserPos.bottom);
-
-		glTexCoord2i(1, 1);
-		glVertex2f(leftLaserPos.left + leftLaserPos.width, leftLaserPos.bottom);
-
-		glTexCoord2i(1, 0);
-		glVertex2f(leftLaserPos.left + leftLaserPos.width, leftLaserPos.bottom + leftLaserPos.height);
-
-		glTexCoord2i(0, 0);
-		glVertex2f(leftLaserPos.left, leftLaserPos.bottom + leftLaserPos.height);
-	
-		glEnd();
-
-		glPopMatrix();
-
-		glDisable(GL_TEXTURE_2D);	
-
+		if (g_TotalElapsedTime == triggersLeft[i]-1.0f)
+		{
+			g_WarningLeft[i] = true;
+			g_LockAngleLeft[i] = true;
+			g_SavedBatPosLeft[i].left = g_BatRect.left;
+			g_SavedBatPosLeft[i].width = g_BatRect.width;
+			g_SavedBatPosLeft[i].bottom = g_BatRect.bottom;
+			g_SavedBatPosLeft[i].height = g_BatRect.height;
+		}
+		if (g_TotalElapsedTime == triggersLeft[i])
+		{
+			g_IsShootingLeft[i] = true;
+			g_WarningLeft[i] = false;
+		}
+		if (g_TotalElapsedTime == float(int((triggersLeft[i]+ laserDuration)*100) % 1000)/100.0f)
+		{
+			g_IsShootingLeft[i] = false;
+			g_LockAngleLeft[i] = false;
+		}
 	}
+	for (int i{}; i < g_RightSize; i++)
+	{
+		if (g_TotalElapsedTime == triggersRight[i]-1.0f)
+		{
+			g_WarningRight[i] = true;
+			g_LockAngleRight[i] = true;
+			g_SavedBatPosRight[i].left = g_BatRect.left;
+			g_SavedBatPosRight[i].width = g_BatRect.width;
+			g_SavedBatPosRight[i].bottom = g_BatRect.bottom;
+			g_SavedBatPosRight[i].height = g_BatRect.height;
+		}
+		if (g_TotalElapsedTime == triggersRight[i])
+		{
+			g_IsShootingRight[i] = true;
+			g_WarningRight[i] = false;
+		}
+		if (g_TotalElapsedTime == float(int((triggersRight[i] + laserDuration) * 100) % 1000) / 100.0f)
+		{
+			g_IsShootingRight[i] = false;
+			g_LockAngleRight[i] = false;
+		}
+	}
+}
+
+void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale)
+{
+	float laserWidth{scale*60.0f};
+	Point2f laserPoint1{ tan((angle / 360.0f)*3.14f * 2)*30.0f+ pivotPointX + ((pivotPointY - g_BatRect.height - g_BatRect.bottom /tan((angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
+	Point2f laserPoint2{ laserPoint1.x + laserWidth,laserPoint1.y};
+	Point2f laserPoint3{ laserPoint1.x - (g_BatRect.height / tan((angle / 360.0f)*3.14f * 2)),laserPoint1.y - g_BatRect.height };
+	Point2f laserPoint4{ laserPoint3.x + laserWidth ,laserPoint1.y - g_BatRect.height };
+	glBegin(GL_QUADS);
+
+	glColor3f(1.0f,0.0f,0.0f);
+	glVertex2f(laserPoint3.x, laserPoint3.y);
+	glVertex2f(laserPoint4.x, laserPoint4.y);
+	glVertex2f(laserPoint2.x, laserPoint2.y);
+	glVertex2f(laserPoint1.x, laserPoint1.y);
 	
+	glEnd();
+	bool checkPoint1{ dae::IsXBetween(laserPoint1.x, laserPoint2.x, g_BatRect.left) };
+	bool checkPoint2{ dae::IsXBetween(laserPoint1.x, laserPoint2.x, g_BatRect.left + g_BatRect.width) };
+	bool checkPoint3{ dae::IsXBetween(laserPoint3.x, laserPoint4.x, g_BatRect.left) };
+	bool checkPoint4{ dae::IsXBetween(laserPoint3.x, laserPoint4.x, g_BatRect.left + g_BatRect.width) };
+	if (checkPoint1)
+	{
+		std::cout << "1 true" <<'\n';
+	}
+	if (checkPoint2)
+	{
+		std::cout << "2 true" << '\n';
+	}
+	if (checkPoint3)
+	{
+		std::cout << "3 true" << '\n';
+	}
+	if (checkPoint4)
+	{
+		std::cout << "4 true" << '\n';
+	}
+}
+void RotateTexture(Texture texture, Rectf texturePos, float angle, Point2f Pivot)
+{
+	glMatrixMode(GL_MODELVIEW);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texture.id);
+	glPushMatrix();
 
+	glTranslatef(Pivot.x, Pivot.y, 0.0f);
+	glRotatef(angle, 0.0f, 0.0f, 1.0f);
+	glTranslatef(-Pivot.x, -Pivot.y, 0.0f);
 
+	glBegin(GL_QUADS);
+
+	glTexCoord2i(0, 1);
+	glVertex2f(texturePos.left, texturePos.bottom);
+	glTexCoord2i(1, 1);
+	glVertex2f(texturePos.left + texturePos.width, texturePos.bottom);
+	glTexCoord2i(1, 0);
+	glVertex2f(texturePos.left + texturePos.width, texturePos.bottom + texturePos.height);
+	glTexCoord2i(0, 0);
+	glVertex2f(texturePos.left, texturePos.bottom + texturePos.height);
+
+	glEnd();
+
+	glPopMatrix();
+	glDisable(GL_TEXTURE_2D);
+	glMatrixMode(GL_PROJECTION);
 }
 
 #pragma endregion gameImplementations
