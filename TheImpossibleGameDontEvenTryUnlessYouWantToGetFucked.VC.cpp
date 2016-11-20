@@ -170,6 +170,13 @@ bool g_IsShootingRight[g_RightSize]{};
 float g_TotalElapsedTime{};
 bool g_WarningLeft[g_LeftSize]{};
 bool g_WarningRight[g_RightSize]{};
+bool g_LockAngleLeft[g_LeftSize]{};
+bool g_LockAngleRight[g_RightSize]{};
+Rectf g_SavedBatPosLeft[g_LeftSize]{};
+Rectf g_SavedBatPosRight[g_RightSize]{};
+
+
+
 #pragma endregion gameDeclarations
 
 
@@ -609,11 +616,12 @@ void DrawCanon()
 {
 	float scale{.5f};
 	float xOffset{ -40.0f};
-
+	float angleLeft[g_LeftSize]{};
+	float angleRight[g_RightSize]{};
+	
 	//for better texture alignment
 	float correction{ 15.0f };
 	float correction2{ 2.0f };
-
 	
 	//left caonons
 	for (int i{}; i < 3; i++)
@@ -623,24 +631,27 @@ void DrawCanon()
 		leftCanonY -= i*150.0f;
 		Rectf leftCanon{ leftCanonX + xOffset,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
 		Point2f movePivotLeft{ leftCanon.left + leftCanon.width / 2 ,leftCanon.bottom + leftCanon.height / 2 + correction*scale };
-		float angleLeft{ -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2) };
 		Rectf leftLaserPos{ leftCanonX + xOffset + g_LeftCanonTex.width / 4 * scale ,leftCanonY + correction2*scale ,g_LeftCanonLaserTex.width*scale,g_LeftCanonLaserTex.height*scale };
 		Rectf leftCanonPos{ leftCanonX + xOffset,leftCanonY,g_LeftCanonBaseTex.width*scale,g_LeftCanonBaseTex.height*scale };
 		Rectf WarningPos{ leftCanonX+g_LeftCanonBaseTex.width*scale,leftCanonY,g_dangerTex.width*scale,g_dangerTex.height*scale };
+		angleLeft[i] = -180.0f + CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2);
+		if (g_LockAngleLeft[i])
+		{
+			angleLeft[i] = -180.0f + CalculateAngle(g_SavedBatPosLeft[i].left + g_SavedBatPosLeft[i].width / 2, g_SavedBatPosLeft[i].bottom + g_SavedBatPosLeft[i].height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2);
+		}
 
 		//draw the moving canon
-		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft, movePivotLeft);
+		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft[i], movePivotLeft);
 		//draw laser if active
 		for (int i{}; i < g_LeftSize; i++)
 		{
-			
 			if (g_WarningLeft[i] && leftCanonY == 400.0f - 150.0f*i)
 			{
 				DrawTexture(g_dangerTex, WarningPos);
 			}
 			if (g_IsShootingLeft[i] && leftCanonY == 400.0f-150.0f*i)
 			{
-				RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft, movePivotLeft);
+				RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft[i], movePivotLeft);
 			}
 		}
 		//draw canonbase
@@ -654,12 +665,15 @@ void DrawCanon()
 		RightCanonY -= i*150.0f;
 		Rectf RightCanon{ RightCanonX - xOffset*1.5f*scale ,RightCanonY,g_RightCanonTex.width*scale,g_RightCanonTex.height*scale };
 		Point2f movePivotRight{ RightCanon.left + RightCanon.width / 2 + 18.0f*scale ,RightCanon.bottom + RightCanon.height / 2 + correction*scale };
-		float angleRight{ CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2) };
 		Rectf RightLaserPos{ RightCanonX - g_RightCanonLaserTex.width*scale - xOffset + 3 * g_RightCanonTex.width / 4 * scale ,RightCanonY + correction2*scale ,g_RightCanonLaserTex.width*scale,g_RightCanonLaserTex.height*scale };
 		Rectf RightCanonPos{ RightCanonX - xOffset ,RightCanonY,g_RightCanonBaseTex.width*scale,g_RightCanonBaseTex.height*scale };
 		Rectf WarningPos{RightCanonX,RightCanonY,g_dangerTex.width*scale,g_dangerTex.height*scale };
-
-		RotateTexture(g_RightCanonTex, RightCanon, angleRight, movePivotRight);
+		angleRight[i] = CalculateAngle(g_BatRect.left + g_BatRect.width / 2, g_BatRect.bottom + g_BatRect.height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2);
+		if (g_LockAngleRight[i])
+		{
+			angleRight[i] = CalculateAngle(g_SavedBatPosRight[i].left + g_SavedBatPosRight[i].width / 2, g_SavedBatPosRight[i].bottom + g_SavedBatPosRight[i].height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2);
+		}
+		RotateTexture(g_RightCanonTex, RightCanon, angleRight[i], movePivotRight);
 		for (int i{}; i < g_RightSize; i++)
 		{
 			if (g_WarningRight[i] && RightCanonY == 300.0f - i*150.0f)
@@ -668,7 +682,7 @@ void DrawCanon()
 			}
 			if (g_IsShootingRight[i] && RightCanonY == 300.0f-i*150.0f)
 			{
-				RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight, movePivotRight);
+				RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight[i], movePivotRight);
 			}
 		}
 		DrawTexture(g_RightCanonBaseTex, RightCanonPos);
@@ -684,9 +698,15 @@ void UpdateCanon(float elapsedTime)
 	float laserDuration{3.0f};
 	for (int i{}; i < g_LeftSize; i++)
 	{
+
 		if (g_TotalElapsedTime == triggersLeft[i]-1.0f)
 		{
 			g_WarningLeft[i] = true;
+			g_LockAngleLeft[i] = true;
+			g_SavedBatPosLeft[i].left = g_BatRect.left;
+			g_SavedBatPosLeft[i].width = g_BatRect.width;
+			g_SavedBatPosLeft[i].bottom = g_BatRect.bottom;
+			g_SavedBatPosLeft[i].height = g_BatRect.height;
 		}
 		if (g_TotalElapsedTime == triggersLeft[i])
 		{
@@ -696,6 +716,7 @@ void UpdateCanon(float elapsedTime)
 		if (g_TotalElapsedTime == float(int((triggersLeft[i]+ laserDuration)*100) % 1000)/100.0f)
 		{
 			g_IsShootingLeft[i] = false;
+			g_LockAngleLeft[i] = false;
 		}
 	}
 	for (int i{}; i < g_RightSize; i++)
@@ -703,6 +724,11 @@ void UpdateCanon(float elapsedTime)
 		if (g_TotalElapsedTime == triggersRight[i]-1.0f)
 		{
 			g_WarningRight[i] = true;
+			g_LockAngleRight[i] = true;
+			g_SavedBatPosRight[i].left = g_BatRect.left;
+			g_SavedBatPosRight[i].width = g_BatRect.width;
+			g_SavedBatPosRight[i].bottom = g_BatRect.bottom;
+			g_SavedBatPosRight[i].height = g_BatRect.height;
 		}
 		if (g_TotalElapsedTime == triggersRight[i])
 		{
@@ -712,6 +738,7 @@ void UpdateCanon(float elapsedTime)
 		if (g_TotalElapsedTime == float(int((triggersRight[i] + laserDuration) * 100) % 1000) / 100.0f)
 		{
 			g_IsShootingRight[i] = false;
+			g_LockAngleRight[i] = false;
 		}
 	}
 }
