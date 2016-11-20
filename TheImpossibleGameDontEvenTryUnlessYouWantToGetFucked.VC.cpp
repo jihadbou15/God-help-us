@@ -748,7 +748,7 @@ void UpdateCanon(float elapsedTime)
 void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale)
 {
 	float laserWidth{scale*60.0f};
-	Point2f laserPoint1{ pivotPointX + ((pivotPointY - g_BatRect.height - g_BatRect.bottom /tan((angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
+	Point2f laserPoint1{ tan((angle / 360.0f)*3.14f * 2)*30.0f+ pivotPointX + ((pivotPointY - g_BatRect.height - g_BatRect.bottom /tan((angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
 	Point2f laserPoint2{ laserPoint1.x + laserWidth,laserPoint1.y};
 	Point2f laserPoint3{ laserPoint1.x - (g_BatRect.height / tan((angle / 360.0f)*3.14f * 2)),laserPoint1.y - g_BatRect.height };
 	Point2f laserPoint4{ laserPoint3.x + laserWidth ,laserPoint1.y - g_BatRect.height };
