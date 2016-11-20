@@ -285,23 +285,6 @@ void InitGameResources()
 		std::cout << "boss.png failed to load." << std::endl;
 	}
 
-	result = TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
-	if (!result)
-	{
-		std::cout << "boss laser .png failed to load." << std::endl;
-	}
-
-	result = TextureFromFile("Resources/laser piece.png", g_LaserTex);
-	if (!result)
-	{
-		std::cout << "laser piece.png failed to load." << std::endl;
-	}
-
-	result = TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
-	if (!result)
-	{
-		std::cout << "laser piece boss.png failed to load." << std::endl;
-	}
 
 	result = TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
 	if (!result)
@@ -325,6 +308,18 @@ void InitGameResources()
 	if (!result)
 	{
 		std::cout << "right canon laser.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/left canon base.png", g_LeftCanonBaseTex);
+	if (!result)
+	{
+		std::cout << "right canon laser.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/right canon base.png", g_RightCanonBaseTex);
+	if (!result)
+	{
+		std::cout << "right canon base.png failed to load." << std::endl;
 	}
 
 
