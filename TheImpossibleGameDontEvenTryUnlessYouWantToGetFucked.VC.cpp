@@ -306,7 +306,7 @@ void InitGameResources()
 		std::cout << "right canon.png failed to load." << std::endl;
 	}
 
-	result = TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
+	result = TextureFromFile("Resources/right canon laser.png", g_RightCanonLaserTex);
 	if (!result)
 	{
 		std::cout << "right canon laser.png failed to load." << std::endl;
@@ -438,29 +438,27 @@ void Update(float elapsedSec)
 	UpdateBat(elapsedSec);
 	UpdateBall(elapsedSec, bricks, bricksState);
 	UpdateCanon(elapsedSec);
-	if (g_IsDead)
-	{
-		CheckDeadByLaser();
-	}
+	
 }
 void CheckDeadByLaser()
 {
-
 	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
-	while (true)
-	{
-		DrawTexture(g_LoserTex, screen);
-	}
+	DrawTexture(g_LoserTex,screen);
 }
 
 void Draw()
 {
+
 	ClearBackground();
 	DrawBat();
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
 	DrawCanon();
 	DrawBoss();
+	if (g_IsDead)
+	{
+		CheckDeadByLaser();
+	}
 }
 void DrawBat()
 {
@@ -765,7 +763,6 @@ void DrawCanon()
 	float xOffset{ -40.0f};
 	float angleLeft[g_LeftSize]{};
 	float angleRight[g_RightSize]{};
-
 	//for better texture alignment
 	float correction{ 15.0f };
 	float correction2{ 2.0f };
@@ -822,6 +819,7 @@ void DrawCanon()
 			angleRight[i] = CalculateAngle(g_SavedBatPosRight[i].left + g_SavedBatPosRight[i].width / 2, g_SavedBatPosRight[i].bottom + g_SavedBatPosRight[i].height / 2, RightCanon.left + RightCanon.width / 2, RightCanon.bottom + RightCanon.height / 2);
 		}
 		RotateTexture(g_RightCanonTex, RightCanon, angleRight[i], movePivotRight);
+		CollisionLaser(angleRight[i], movePivotRight.x, movePivotRight.y, scale, g_IsShootingRight[i]);
 		for (int i{}; i < g_RightSize; i++)
 		{
 			if (g_WarningRight[i] && RightCanonY == 300.0f - i*150.0f)
