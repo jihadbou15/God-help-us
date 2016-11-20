@@ -83,10 +83,6 @@ enum class Diff
 	Easy, Medium, Hard, Daddy, DOA
 };
 
-enum class BossState
-{
-	Still, Moving
-};
 
 // Functions
 void InitGameResources();
@@ -118,6 +114,9 @@ float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 
 // Variables
 
+int g_FrameCounter{};
+Circlef g_Explosion{};
+int g_DeathCounter{};
 
 // init values
 const Point2f g_BatDimens{ 100.0f,50.0f };
@@ -129,6 +128,7 @@ float g_ColorB{ 0.0f };
 float g_ColorA{ 0.5f };
 Diff g_GameDiff{};
 
+const Point2f g_Ballpos{ g_WindowWidth / 2,120.0f };
 //brick var 
 float g_BrickWidth{ 40.0f };
 float g_BrickHeight{ 20.0f };
@@ -148,15 +148,17 @@ bool g_MoveRight{};
 //Ball var
 Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
 Point2f g_Radius{ 10.0f,10.0f };
-Point2f g_Center{ g_WindowWidth / 2,120.0f };
+Point2f g_Center{ g_Ballpos.x,g_Ballpos.y };
 Point2f g_PrevBallPos{};
 float g_VelBallYValue{ 300.0f };
 float g_VelBallXValue{ 300.0f };
+ObjState g_BallState{ObjState::Running};
 
 //Boss Var
 float g_BossWidth{256.0f};
 float g_BossHeight{213.0f};
 Rectf g_BossRect{(g_WindowWidth/2)-(g_BossWidth/2),g_WindowHeight-g_BossHeight, g_BossWidth,g_BossHeight};
+ObjState g_BossState{ObjState::Running};
 
 //Texture var
 Texture g_BallTex{};
@@ -513,15 +515,23 @@ void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 	{
 		for (int j = 0; j < columns; j++)
 		{
-			
-			
-				switch (ColorCounter)
+			switch (ColorCounter)
 				{
 				case 0:
 					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
 					{
 						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
 						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
+					else if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Destroying)
+					{
+						pArray[dae::GetArrayIndex(i, j, columns)].bottom--;
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+						if (pArray[dae::GetArrayIndex(i, j, columns)].bottom < 0.0f - pArray[dae::GetArrayIndex(i, j, columns)].height)
+						{
+							pState[dae::GetArrayIndex(i, j, columns)] = ObjState::Destroyed;
+						}
 					}
 					break;
 				case 1:
@@ -530,12 +540,32 @@ void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], white);
 						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
 					}
+					else if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Destroying)
+					{
+						pArray[dae::GetArrayIndex(i, j, columns)].bottom--;
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], white);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+						if (pArray[dae::GetArrayIndex(i, j, columns)].bottom < 0.0f - pArray[dae::GetArrayIndex(i, j, columns)].height)
+						{
+							pState[dae::GetArrayIndex(i, j, columns)] = ObjState::Destroyed;
+						}
+					}
 					break;
 				case 2: 
 					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
 					{
 						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
 						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
+					else if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Destroying)
+					{
+						pArray[dae::GetArrayIndex(i, j, columns)].bottom--;
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+						if (pArray[dae::GetArrayIndex(i, j, columns)].bottom < 0.0f - pArray[dae::GetArrayIndex(i, j, columns)].height)
+						{
+							pState[dae::GetArrayIndex(i, j, columns)] = ObjState::Destroyed;
+						}
 					}
 				default:
 					break;
@@ -546,48 +576,77 @@ void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 				{
 					ColumnsCounter = 0;
 					ColorCounter++;
-				}
-				
-				
-		
-
-			
+				}	
 		}
 		ColorCounter = 0;
 	}
 }
+
 void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 {
-	//old position
-	g_PrevBallPos.x = g_Center.x;
-	g_PrevBallPos.y = g_Center.y;
-
-	//new position
-	g_Center.y += g_VelBallYValue*elapsedSec;
-	g_Center.x += g_VelBallXValue*elapsedSec;
-
-	CollisionDetect(g_PrevBallPos, g_BatRect);
-	
-	bool hit{ false };
-	
-	for (int i = 0; i < g_Rows; i++)
+	if (g_BallState == ObjState::Running && !(g_BossState == ObjState::Destroying || g_BossState == ObjState::Destroyed))
 	{
-		for (int j = 0; j < g_Columns; j++)
-		{
-			if (pState[dae::GetArrayIndex(i, j, g_Columns)] == ObjState::Running)
-			{
-				hit = CollisionDetect(g_PrevBallPos, pArray[dae::GetArrayIndex(i, j, g_Columns)]);
+		//old position
+		g_PrevBallPos.x = g_Center.x;
+		g_PrevBallPos.y = g_Center.y;
 
-				if (hit)
+		//new position
+		g_Center.y += g_VelBallYValue*elapsedSec;
+		g_Center.x += g_VelBallXValue*elapsedSec;
+
+		CollisionDetect(g_PrevBallPos, g_BatRect);
+
+		bool hit{ false };
+
+		for (int i = 0; i < g_Rows; i++)
+		{
+			for (int j = 0; j < g_Columns; j++)
+			{
+				if (pState[dae::GetArrayIndex(i, j, g_Columns)] == ObjState::Running)
 				{
-					pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Destroyed;
+					hit = CollisionDetect(g_PrevBallPos, pArray[dae::GetArrayIndex(i, j, g_Columns)]);
+
+					if (hit)
+					{
+						pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Destroying;
+					}
 				}
 			}
 		}
-	}
 
-	KeepBallInScreen();
+		hit = false;
+
+		hit = CollisionDetect(g_PrevBallPos, g_BossRect);
+
+		if (hit)
+		{
+			g_BossState = ObjState::Destroying;
+		}
+		KeepBallInScreen();
+
+		if (g_Center.y + g_Radius.y < 0.0f)
+		{
+			g_FrameCounter = 0;
+			g_DeathCounter++;
+			g_VelBallYValue = -g_VelBallYValue;
+			g_BallState = ObjState::Destroyed;
+		}
+	}
+	if (g_BallState == ObjState::Destroyed)
+	{
+		
+		g_FrameCounter++;
+		if (g_FrameCounter == 60)
+		{
+			g_BallState = ObjState::Running;
+			g_Center.x = g_BatPos.x+g_BatDimens.x;
+			g_Center.y = g_BatPos.y+g_BatDimens.y;
+
+		}
+	}
 }
+
+	
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 {
@@ -670,6 +729,7 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 	return false;
 
 }
+
 void KeepBallInScreen()
 {
 	if (g_Center.y + g_Radius.y > g_WindowHeight)
@@ -688,6 +748,7 @@ void KeepBallInScreen()
 		g_Center.x = g_Radius.x;
 	}
 }
+
 void DrawLaser()
 {
 	float scale{ 0.75f };
@@ -743,8 +804,31 @@ void DrawLaser()
 
 void DrawBoss()
 {
+	Color4f color{ 1.0f,1.0f,1.0f,0.5f };
+	int nrSides{ 20 };
 
-	DrawTexture(g_BossTex, g_BossRect);
+	switch (g_BossState)
+	{
+	case ObjState::Running:
+		DrawTexture(g_BossTex, g_BossRect);
+		break;
+
+	case ObjState::Destroying:
+		
+		g_Explosion.center.x = g_BossRect.left + (g_BossRect.width / 2);
+		g_Explosion.center.y = g_BossRect.bottom + (g_BossRect.height / 2);
+		g_Explosion.radius++;
+		if (g_Explosion.radius >= ((g_WindowWidth / 2) + 100.f))
+		{
+		g_BossState = ObjState::Destroyed;
+		}
+		dae::DrawEllipse(color, g_Explosion.center, g_Explosion.radius,nrSides);
+		break;
+
+	default:
+		break;
+	}
+	
 }
 
 #pragma endregion gameImplementations

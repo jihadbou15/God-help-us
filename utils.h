@@ -9,6 +9,7 @@ namespace dae
 	void DrawGradient(Rectf rect, Color4f firstColor, Color4f secondColor);
 	void DrawStar(float centerX, float centerY, float radius, Color4f Color);
 	void DrawEllipse(Color4f Color, Point2f Center, Point2f radius);
+	void DrawEllipse(const Color4f &color, const Point2f &pos, float radius, int nrSides);
 
 	float GetDistanceCircle(Point2f point, Point2f circleCenter, float circle2Radius);
 	float GetDistance2Circles(Point2f circleCenter, float Radius, Point2f circleCenter2, float Radius2);
