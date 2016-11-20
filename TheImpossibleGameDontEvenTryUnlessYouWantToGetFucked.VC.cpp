@@ -112,8 +112,8 @@ void ClearBackground();
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 void RotateTexture(Texture texture,Rectf texturePos, float angle, Point2f Pivot);
 void UpdateCanon(float elapsedTime);
-void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scale);
-
+void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scale, bool isShooting);
+void CheckDeadByLaser();
 
 // Variables
 
@@ -147,6 +147,7 @@ Rectf g_BatRect{ g_BatPos.x, g_BatPos.y,g_BatDimens.x,g_BatDimens.y };
 float g_BatVel{};
 bool g_MoveLeft{};
 bool g_MoveRight{};
+bool g_IsDead{};
 
 //Ball var
 Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
@@ -176,6 +177,7 @@ Texture g_LeftCanonLaserTex{};
 Texture g_RightCanonLaserTex{};
 Texture g_LeftCanonBaseTex{};
 Texture g_RightCanonBaseTex{};
+Texture g_LoserTex{};
 
 //laser var
 const int g_LeftSize{3};
@@ -322,6 +324,12 @@ void InitGameResources()
 		std::cout << "right canon base.png failed to load." << std::endl;
 	}
 
+	result = TextureFromFile("Resources/Loser.png", g_LoserTex);
+	if (!result)
+	{
+		std::cout << "Loser.png failed to load." << std::endl;
+	}
+
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -363,7 +371,7 @@ void FreeGameResources( )
 	DeleteTexture(g_RightCanonLaserTex);
 	DeleteTexture(g_LeftCanonBaseTex);
 	DeleteTexture(g_RightCanonBaseTex);
-
+	DeleteTexture(g_LoserTex);
 	
 }
 void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
@@ -430,6 +438,19 @@ void Update(float elapsedSec)
 	UpdateBat(elapsedSec);
 	UpdateBall(elapsedSec, bricks, bricksState);
 	UpdateCanon(elapsedSec);
+	if (g_IsDead)
+	{
+		CheckDeadByLaser();
+	}
+}
+void CheckDeadByLaser()
+{
+
+	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
+	while (true)
+	{
+		DrawTexture(g_LoserTex, screen);
+	}
 }
 
 void Draw()
@@ -782,7 +803,7 @@ void DrawCanon()
 		}
 		//draw canonbase
 		DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
-		CollisionLaser(angleLeft[i],movePivotLeft.x, movePivotLeft.y,scale);
+		CollisionLaser(angleLeft[i],movePivotLeft.x, movePivotLeft.y,scale, g_IsShootingLeft[i]);
 	}
 	//right canons
 	for (int i{}; i < 2; i++)
@@ -870,42 +891,23 @@ void UpdateCanon(float elapsedTime)
 	}
 }
 
-void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale)
+void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale, bool isShooting)
 {
-	float laserWidth{scale*60.0f};
-	Point2f laserPoint1{ tan((angle / 360.0f)*3.14f * 2)*30.0f+ pivotPointX + ((pivotPointY - g_BatRect.height - g_BatRect.bottom /tan((angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
+	float laserWidth{scale*50.0f};
+	Point2f laserPoint1{ -20.0f+pivotPointX + (((pivotPointY - g_BatRect.height - g_BatRect.bottom) /tan((-angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
 	Point2f laserPoint2{ laserPoint1.x + laserWidth,laserPoint1.y};
 	Point2f laserPoint3{ laserPoint1.x - (g_BatRect.height / tan((angle / 360.0f)*3.14f * 2)),laserPoint1.y - g_BatRect.height };
 	Point2f laserPoint4{ laserPoint3.x + laserWidth ,laserPoint1.y - g_BatRect.height };
-	glBegin(GL_QUADS);
 
-	glColor3f(1.0f,0.0f,0.0f);
-	glVertex2f(laserPoint3.x, laserPoint3.y);
-	glVertex2f(laserPoint4.x, laserPoint4.y);
-	glVertex2f(laserPoint2.x, laserPoint2.y);
-	glVertex2f(laserPoint1.x, laserPoint1.y);
+	bool checkPoint1{ dae::IsXBetween(laserPoint2.x, laserPoint1.x, g_BatRect.left) };
+	bool checkPoint2{ dae::IsXBetween(laserPoint2.x, laserPoint1.x, g_BatRect.left + g_BatRect.width) };
+	bool checkPoint3{ dae::IsXBetween(laserPoint4.x, laserPoint3.x, g_BatRect.left) };
+	bool checkPoint4{ dae::IsXBetween(laserPoint4.x, laserPoint3.x, g_BatRect.left + g_BatRect.width) };
+	if ((checkPoint1 || checkPoint2|| checkPoint3|| checkPoint4) && isShooting)
+	{
+		g_IsDead = true;
+	}
 
-	glEnd();
-	bool checkPoint1{ dae::IsXBetween(laserPoint1.x, laserPoint2.x, g_BatRect.left) };
-	bool checkPoint2{ dae::IsXBetween(laserPoint1.x, laserPoint2.x, g_BatRect.left + g_BatRect.width) };
-	bool checkPoint3{ dae::IsXBetween(laserPoint3.x, laserPoint4.x, g_BatRect.left) };
-	bool checkPoint4{ dae::IsXBetween(laserPoint3.x, laserPoint4.x, g_BatRect.left + g_BatRect.width) };
-	if (checkPoint1)
-	{
-		std::cout << "1 true" <<'\n';
-	}
-	if (checkPoint2)
-	{
-		std::cout << "2 true" << '\n';
-	}
-	if (checkPoint3)
-	{
-		std::cout << "3 true" << '\n';
-	}
-	if (checkPoint4)
-	{
-		std::cout << "4 true" << '\n';
-	}
 }
 void RotateTexture(Texture texture, Rectf texturePos, float angle, Point2f Pivot)
 {
