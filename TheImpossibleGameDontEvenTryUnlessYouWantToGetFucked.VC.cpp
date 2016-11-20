@@ -626,11 +626,11 @@ void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 	{
 		
 		g_FrameCounter++;
-		if (g_FrameCounter == 60)
+		if (g_FrameCounter == 120)
 		{
 			g_BallState = ObjState::Running;
-			g_Center.x = g_BatPos.x+g_BatDimens.x;
-			g_Center.y = g_BatPos.y+g_BatDimens.y;
+			g_Center.x = g_BatRect.left + (g_BatRect.width/2);
+			g_Center.y = g_BatRect.bottom+g_BatDimens.y+10.0f;
 
 		}
 	}
@@ -640,7 +640,7 @@ void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 {
-	//caculate angle
+	//calculate angle
 	float deltaY{ Point2Y - Point1Y };
 	float deltaX{ Point2X - Point1X };
 	float angle{ atan(deltaY / deltaX)*float(180 / M_PI) };
@@ -677,22 +677,22 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 	if (IsBallXInRect && IsBallYInRect)// if the ball hits the rect
 	{
 		//if it hits on the left or right
-		if (PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom)
+		if (PrevBallPos.y <= rectangle.bottom + rectangle.height && PrevBallPos.y >= rectangle.bottom)
 		{
 			g_VelBallXValue = -g_VelBallXValue;
 			//if it hits on the right
 			if (PrevBallPos.x > rectangle.left && PrevBallPos.x > rectangle.left + rectangle.width)
 			{
-				g_Center.x = rectangle.left + rectangle.width + g_Radius.x;
+				g_Center.x = rectangle.left + rectangle.width + g_Radius.x+ 2.0f;
 			}
-			//if it hits on the right
+			//if it hits on the left
 			else
 			{
-				g_Center.x = rectangle.left - g_Radius.x;
+				g_Center.x = rectangle.left - g_Radius.x - 2.0f;
 			}
 		}
 		//if it hits on the top or bottom
-		else if (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left + rectangle.width)
+		if (PrevBallPos.x >= rectangle.left  && PrevBallPos.x <= rectangle.left + rectangle.width)
 		{
 			g_VelBallYValue = -g_VelBallYValue;
 			//if it hits on the top
@@ -706,12 +706,6 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 				g_Center.y = rectangle.bottom - g_Radius.y;
 			}
 		}
-		else if ((PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom) || (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left + rectangle.width))
-		{
-			g_VelBallYValue = -g_VelBallYValue;
-			g_VelBallXValue = -g_VelBallXValue;
-		}
-		
 
 		return true;
 	}
