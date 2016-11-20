@@ -1,4 +1,4 @@
-// 1DAE06 - Bossuyt Niels
+// 1DAE06 - Bossuyt Niels , Jihad Bouhaiji
 
 #pragma region generalDirectives
 // SDL libs
@@ -32,7 +32,7 @@
 #pragma region windowInformation
 const float g_WindowWidth{ 1000.0f };
 const float g_WindowHeight{ 800.0f };
-const std::string g_WindowTitle{ "TheImpossibleGameDontEvenTryUnlessYouWantToGetFucked - Bossuyt, Niels- 1DAE06" };
+const std::string g_WindowTitle{ "TheImpossibleGameDontEvenTryUnlessYouWantToGetFucked - Bossuyt, Niels ; Jihad, Bouhaiji- 1DAE06" };
 bool g_IsVSyncOn{ true };
 #pragma endregion windowInformation
 
@@ -83,6 +83,7 @@ enum class Diff
 	Easy, Medium, Hard, Daddy, DOA
 };
 
+
 // Functions
 void InitGameResources();
 void InitBricks(Rectf *pArray, ObjState *pState, int columns, int rows);
@@ -104,6 +105,7 @@ void Draw();
 void DrawBat();
 void DrawBall();
 void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns);
+void DrawBoss();
 void DrawCanon();
 void ClearBackground();
 
@@ -114,6 +116,11 @@ void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scal
 
 
 // Variables
+
+int g_FrameCounter{};
+Circlef g_Explosion{};
+int g_DeathCounter{};
+
 // init values
 const Point2f g_BatDimens{ 100.0f,50.0f };
 const Point2f g_BatPos{ g_WindowWidth / 2 - g_BatDimens.x / 2 ,60.0f };
@@ -124,6 +131,7 @@ float g_ColorB{ 0.0f };
 float g_ColorA{ 0.5f };
 Diff g_GameDiff{};
 
+const Point2f g_Ballpos{ g_WindowWidth / 2,120.0f };
 //brick var 
 float g_BrickWidth{ 40.0f };
 float g_BrickHeight{ 20.0f };
@@ -143,11 +151,17 @@ bool g_MoveRight{};
 //Ball var
 Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
 Point2f g_Radius{ 10.0f,10.0f };
-Point2f g_Center{ g_WindowWidth / 2,120.0f };
+Point2f g_Center{ g_Ballpos.x,g_Ballpos.y };
 Point2f g_PrevBallPos{};
 float g_VelBallYValue{ 300.0f };
 float g_VelBallXValue{ 300.0f };
+ObjState g_BallState{ObjState::Running};
 
+//Boss Var
+float g_BossWidth{256.0f};
+float g_BossHeight{213.0f};
+Rectf g_BossRect{(g_WindowWidth/2)-(g_BossWidth/2),g_WindowHeight-g_BossHeight, g_BossWidth,g_BossHeight};
+ObjState g_BossState{ObjState::Running};
 
 //Texture var
 Texture g_BallTex{};
@@ -236,20 +250,83 @@ int main(int argc, char* args[])
 #pragma region gameImplementations
 void InitGameResources()
 {
-	TextureFromFile("Resources/ball.png", g_BallTex);
-	TextureFromFile("Resources/bat base.png", g_BatTex);
-	TextureFromFile("Resources/bat dead.png", g_deadBatTex);
 
-	TextureFromFile("Resources/danger.png", g_dangerTex);
-	TextureFromFile("Resources/bomb.png", g_BombTex);
-	TextureFromFile("Resources/boss.png", g_BossTex);
+	bool result = TextureFromFile("Resources/ball.png", g_BallTex);
+	if (!result)
+	{
+		std::cout << "ball.png failed to load." << std::endl;
+	}
+	result = TextureFromFile("Resources/bat base.png", g_BatTex);
+	if (!result)
+	{
+		std::cout << "bat base.png failed to load." << std::endl;
+	}
+	
+	result = TextureFromFile("Resources/bat dead.png", g_deadBatTex);
+	if (!result)
+	{
+		std::cout << "bat dead.png failed to load." << std::endl;
+	}
+	result = TextureFromFile("Resources/danger.png", g_dangerTex);
+	if (!result)
+	{
+		std::cout << "danger.png failed to load." << std::endl;
+	}
 
-	TextureFromFile("Resources/left canon base.png", g_LeftCanonBaseTex);
-	TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
-	TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
-	TextureFromFile("Resources/right canon base.png", g_RightCanonBaseTex);
-	TextureFromFile("Resources/right canon.png", g_RightCanonTex);
-	TextureFromFile("Resources/right canon laser.png", g_RightCanonLaserTex);
+	result = TextureFromFile("Resources/bomb.png", g_BombTex);
+	if (!result)
+	{
+		std::cout << "bomb.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/boss.png", g_BossTex);
+	if (!result)
+	{
+		std::cout << "boss.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/boss laser .png", g_BossWithLaserTex);
+	if (!result)
+	{
+		std::cout << "boss laser .png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/laser piece.png", g_LaserTex);
+	if (!result)
+	{
+		std::cout << "laser piece.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/laser piece boss.png", g_LaserBossTex);
+	if (!result)
+	{
+		std::cout << "laser piece boss.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/left canon.png", g_LeftCanonTex);
+	if (!result)
+	{
+		std::cout << "left canon.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/left canon laser.png", g_LeftCanonLaserTex);
+	if (!result)
+	{
+		std::cout << "left canon laser.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/right canon.png", g_RightCanonTex);
+	if (!result)
+	{
+		std::cout << "right canon.png failed to load." << std::endl;
+	}
+
+	result = TextureFromFile("Resources/right canon laser .png", g_RightCanonLaserTex);
+	if (!result)
+	{
+		std::cout << "right canon laser.png failed to load." << std::endl;
+	}
+
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -267,7 +344,7 @@ void InitBricks(Rectf * pArray, ObjState *pState, int columns, int rows)
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].width = g_BrickWidth;
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].height = g_BrickHeight;
 			pArray[dae::GetArrayIndex(i, j, g_Columns)].left = (g_BrickWidth/counter) + (j*g_BrickWidth);
-			pArray[dae::GetArrayIndex(i, j, g_Columns)].bottom = (g_WindowHeight - 256.0f) - (i*g_BrickHeight);
+			pArray[dae::GetArrayIndex(i, j, g_Columns)].bottom = (g_WindowHeight - 200.0f) - (i*g_BrickHeight);
 			pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Running;
 			
 		}
@@ -367,7 +444,7 @@ void Draw()
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
 	DrawCanon();
-
+	DrawBoss();
 }
 void DrawBat()
 {
@@ -433,8 +510,6 @@ void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 	{
 		for (int j = 0; j < columns; j++)
 		{
-			
-			
 				switch (ColorCounter)
 				{
 				case 0:
@@ -443,6 +518,16 @@ void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
 						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
 					}
+					else if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Destroying)
+					{
+						pArray[dae::GetArrayIndex(i, j, columns)].bottom--;
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], green);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+						if (pArray[dae::GetArrayIndex(i, j, columns)].bottom < 0.0f - pArray[dae::GetArrayIndex(i, j, columns)].height)
+						{
+							pState[dae::GetArrayIndex(i, j, columns)] = ObjState::Destroyed;
+						}
+					}
 					break;
 				case 1:
 					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
@@ -450,12 +535,32 @@ void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], white);
 						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
 					}
+					else if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Destroying)
+					{
+						pArray[dae::GetArrayIndex(i, j, columns)].bottom--;
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], white);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+						if (pArray[dae::GetArrayIndex(i, j, columns)].bottom < 0.0f - pArray[dae::GetArrayIndex(i, j, columns)].height)
+						{
+							pState[dae::GetArrayIndex(i, j, columns)] = ObjState::Destroyed;
+						}
+					}
 					break;
 				case 2: 
 					if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Running)
 					{
 						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
 						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+					}
+					else if (pState[dae::GetArrayIndex(i, j, columns)] == ObjState::Destroying)
+					{
+						pArray[dae::GetArrayIndex(i, j, columns)].bottom--;
+						dae::DrawFillRect(pArray[dae::GetArrayIndex(i, j, columns)], red);
+						dae::DrawRect(pArray[dae::GetArrayIndex(i, j, columns)], outline);
+						if (pArray[dae::GetArrayIndex(i, j, columns)].bottom < 0.0f - pArray[dae::GetArrayIndex(i, j, columns)].height)
+						{
+							pState[dae::GetArrayIndex(i, j, columns)] = ObjState::Destroyed;
+						}
 					}
 				default:
 					break;
@@ -467,17 +572,15 @@ void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns)
 					ColumnsCounter = 0;
 					ColorCounter++;
 				}
-				
-				
-		
-
-			
 		}
 		ColorCounter = 0;
 	}
 }
+
 void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 {
+	if (g_BallState == ObjState::Running && !(g_BossState == ObjState::Destroying || g_BossState == ObjState::Destroyed))
+	{
 	//old position
 	g_PrevBallPos.x = g_Center.x;
 	g_PrevBallPos.y = g_Center.y;
@@ -500,14 +603,45 @@ void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 
 				if (hit)
 				{
-					pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Destroyed;
+						pState[dae::GetArrayIndex(i, j, g_Columns)] = ObjState::Destroying;
 				}
 			}
 		}
 	}
 
+		hit = false;
+
+		hit = CollisionDetect(g_PrevBallPos, g_BossRect);
+
+		if (hit)
+		{
+			g_BossState = ObjState::Destroying;
+		}
 	KeepBallInScreen();
+
+		if (g_Center.y + g_Radius.y < 0.0f)
+		{
+			g_FrameCounter = 0;
+			g_DeathCounter++;
+			g_VelBallYValue = -g_VelBallYValue;
+			g_BallState = ObjState::Destroyed;
+		}
+	}
+	if (g_BallState == ObjState::Destroyed)
+	{
+		
+		g_FrameCounter++;
+		if (g_FrameCounter == 60)
+		{
+			g_BallState = ObjState::Running;
+			g_Center.x = g_BatPos.x+g_BatDimens.x;
+			g_Center.y = g_BatPos.y+g_BatDimens.y;
+
+		}
+	}
 }
+
+	
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 {
@@ -577,7 +711,7 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 				g_Center.y = rectangle.bottom - g_Radius.y;
 			}
 		}
-		else if ((PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom) && (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left + rectangle.width))
+		else if ((PrevBallPos.y < rectangle.bottom + rectangle.height && PrevBallPos.y > rectangle.bottom) || (PrevBallPos.x > rectangle.left  && PrevBallPos.x < rectangle.left + rectangle.width))
 		{
 			g_VelBallYValue = -g_VelBallYValue;
 			g_VelBallXValue = -g_VelBallXValue;
@@ -590,17 +724,13 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 	return false;
 
 }
+
 void KeepBallInScreen()
 {
 	if (g_Center.y + g_Radius.y > g_WindowHeight)
 	{
 		g_VelBallYValue = -g_VelBallYValue;
 		g_Center.y = g_WindowHeight - g_Radius.y;
-	}
-	if (g_Center.y - g_Radius.y < 0.0f)
-	{
-		g_VelBallYValue = -g_VelBallYValue;
-		g_Center.y = g_Radius.y;
 	}
 	if (g_Center.x + g_Radius.x > g_WindowWidth)
 	{
@@ -619,7 +749,7 @@ void DrawCanon()
 	float xOffset{ -40.0f};
 	float angleLeft[g_LeftSize]{};
 	float angleRight[g_RightSize]{};
-	
+
 	//for better texture alignment
 	float correction{ 15.0f };
 	float correction2{ 2.0f };
@@ -759,7 +889,7 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 	glVertex2f(laserPoint4.x, laserPoint4.y);
 	glVertex2f(laserPoint2.x, laserPoint2.y);
 	glVertex2f(laserPoint1.x, laserPoint1.y);
-	
+
 	glEnd();
 	bool checkPoint1{ dae::IsXBetween(laserPoint1.x, laserPoint2.x, g_BatRect.left) };
 	bool checkPoint2{ dae::IsXBetween(laserPoint1.x, laserPoint2.x, g_BatRect.left + g_BatRect.width) };
@@ -787,28 +917,60 @@ void RotateTexture(Texture texture, Rectf texturePos, float angle, Point2f Pivot
 	glMatrixMode(GL_MODELVIEW);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texture.id);
-	glPushMatrix();
+		glPushMatrix();
 
 	glTranslatef(Pivot.x, Pivot.y, 0.0f);
 	glRotatef(angle, 0.0f, 0.0f, 1.0f);
 	glTranslatef(-Pivot.x, -Pivot.y, 0.0f);
-
-	glBegin(GL_QUADS);
-
-	glTexCoord2i(0, 1);
+		
+		glBegin(GL_QUADS);
+		
+		glTexCoord2i(0, 1);
 	glVertex2f(texturePos.left, texturePos.bottom);
-	glTexCoord2i(1, 1);
+		glTexCoord2i(1, 1);
 	glVertex2f(texturePos.left + texturePos.width, texturePos.bottom);
-	glTexCoord2i(1, 0);
+		glTexCoord2i(1, 0);
 	glVertex2f(texturePos.left + texturePos.width, texturePos.bottom + texturePos.height);
-	glTexCoord2i(0, 0);
+		glTexCoord2i(0, 0);
 	glVertex2f(texturePos.left, texturePos.bottom + texturePos.height);
+	
+		glEnd();
 
-	glEnd();
+		glPopMatrix();
+		glDisable(GL_TEXTURE_2D);	
+		glMatrixMode(GL_PROJECTION);
+	
 
-	glPopMatrix();
-	glDisable(GL_TEXTURE_2D);
-	glMatrixMode(GL_PROJECTION);
+
+}
+
+void DrawBoss()
+{
+	Color4f color{ 1.0f,1.0f,1.0f,0.5f };
+	int nrSides{ 20 };
+
+	switch (g_BossState)
+	{
+	case ObjState::Running:
+		DrawTexture(g_BossTex, g_BossRect);
+		break;
+
+	case ObjState::Destroying:
+		
+		g_Explosion.center.x = g_BossRect.left + (g_BossRect.width / 2);
+		g_Explosion.center.y = g_BossRect.bottom + (g_BossRect.height / 2);
+		g_Explosion.radius++;
+		if (g_Explosion.radius >= ((g_WindowWidth / 2) + 100.f))
+		{
+		g_BossState = ObjState::Destroyed;
+		}
+		dae::DrawEllipse(color, g_Explosion.center, g_Explosion.radius,nrSides);
+		break;
+
+	default:
+		break;
+	}
+	
 }
 
 #pragma endregion gameImplementations

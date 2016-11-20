@@ -108,6 +108,26 @@ namespace dae
 		glEnd();
 
 	}
+
+	void DrawEllipse(const Color4f & color, const Point2f & pos, float radius, int nrSides)
+	{
+		float angle{ float(2 * M_PI) };
+
+		angle = angle / nrSides;
+
+		glBegin(GL_TRIANGLE_FAN);
+		glColor4f(color.r, color.g, color.b, color.a);
+
+		glVertex2f(pos.x, pos.y);
+
+		for (int i = 0; i <= nrSides; i++)
+		{
+			glVertex2f(float(pos.x + (radius * cos(i*angle))), float(pos.y + (radius * sin(i*angle))));
+		}
+
+		glEnd();
+	}
+
 	float GetDistanceCircle(Point2f point, Point2f circleCenter, float Radius)
 	{
 		float distance{};
