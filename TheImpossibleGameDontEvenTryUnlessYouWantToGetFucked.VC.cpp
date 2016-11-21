@@ -178,6 +178,7 @@ Texture g_RightCanonLaserTex{};
 Texture g_LeftCanonBaseTex{};
 Texture g_RightCanonBaseTex{};
 Texture g_LoserTex{};
+Texture g_BackGroundTex{};
 
 //laser var
 const int g_LeftSize{3};
@@ -196,7 +197,7 @@ int g_Framecounter{};
 int g_Framecounter2{};
 bool g_SaveBatPos{};
 bool g_HoldBatPos{};
-
+Rectf g_Screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
 #pragma endregion gameDeclarations
 
 
@@ -332,7 +333,12 @@ void InitGameResources()
 	{
 		std::cout << "Loser.png failed to load." << std::endl;
 	}
-
+	
+	result = TextureFromFile("Resources/background.png", g_BackGroundTex);
+	if (!result)
+	{
+		std::cout << "background.png failed to load." << std::endl;
+	}
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -375,6 +381,7 @@ void FreeGameResources( )
 	DeleteTexture(g_LeftCanonBaseTex);
 	DeleteTexture(g_RightCanonBaseTex);
 	DeleteTexture(g_LoserTex);
+	DeleteTexture(g_BackGroundTex);
 	
 }
 void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
@@ -444,14 +451,15 @@ void Update(float elapsedSec)
 }
 void CheckDeadByLaser()
 {
-		Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
-		DrawTexture(g_LoserTex, screen);
+		
+		DrawTexture(g_LoserTex, g_Screen);
 }
 
 void Draw()
 {
 
 	ClearBackground();
+	DrawTexture(g_BackGroundTex, g_Screen);
 	DrawBat();
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
