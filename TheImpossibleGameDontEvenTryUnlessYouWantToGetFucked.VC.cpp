@@ -107,13 +107,15 @@ void DrawBall();
 void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns);
 void DrawBoss();
 void DrawCanon();
+void DrawWin();
+
 void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 void RotateTexture(Texture texture,Rectf texturePos, float angle, Point2f Pivot);
 void UpdateCanon(float elapsedTime);
 void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scale, bool isShooting);
-void CheckDeadByLaser();
+void DrawLose();
 
 // Variables
 
@@ -125,17 +127,14 @@ int g_DeathCounter{};
 const Point2f g_BatDimens{ 100.0f,50.0f };
 const Point2f g_BatPos{ g_WindowWidth / 2 - g_BatDimens.x / 2 ,60.0f };
 float g_VelBatValue{ 500.0f };
-float g_ColorR{ 0.0f };
-float g_ColorG{ 1.0f };
-float g_ColorB{ 0.0f };
-float g_ColorA{ 0.5f };
+
 Diff g_GameDiff{};
 
 const Point2f g_Ballpos{ g_WindowWidth / 2,120.0f };
+
 //brick var 
 float g_BrickWidth{ 40.0f };
 float g_BrickHeight{ 20.0f };
-
 int g_Rows{};
 int g_Columns{ int((g_WindowWidth - g_BrickWidth) / g_BrickWidth) };
 
@@ -150,7 +149,6 @@ bool g_MoveRight{};
 bool g_IsDead{};
 
 //Ball var
-Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
 Point2f g_Radius{ 10.0f,10.0f };
 Point2f g_Center{ g_Ballpos.x,g_Ballpos.y };
 Point2f g_PrevBallPos{};
@@ -178,6 +176,7 @@ Texture g_RightCanonLaserTex{};
 Texture g_LeftCanonBaseTex{};
 Texture g_RightCanonBaseTex{};
 Texture g_LoserTex{};
+Texture g_WinTex{};
 
 //laser var
 const int g_LeftSize{3};
@@ -330,6 +329,12 @@ void InitGameResources()
 		std::cout << "Loser.png failed to load." << std::endl;
 	}
 
+	result = TextureFromFile("Resources/Win.png", g_WinTex);
+	if (!result)
+	{
+		std::cout << "Win.png failed to load." << std::endl;
+	}
+
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -357,6 +362,7 @@ void InitBricks(Rectf * pArray, ObjState *pState, int columns, int rows)
 	}
 }
 }
+
 void FreeGameResources( )
 {
 	DeleteTexture(g_BallTex);
@@ -440,7 +446,7 @@ void Update(float elapsedSec)
 	UpdateCanon(elapsedSec);
 	
 }
-void CheckDeadByLaser()
+void DrawLose()
 {
 	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
 	DrawTexture(g_LoserTex,screen);
@@ -448,16 +454,22 @@ void CheckDeadByLaser()
 
 void Draw()
 {
-
-	ClearBackground();
-	DrawBat();
-	DrawBall();
-	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
-	DrawCanon();
-	DrawBoss();
-	if (g_IsDead)
+	if (g_BossState == ObjState::Running || g_BossState == ObjState::Destroying)
 	{
-		CheckDeadByLaser();
+		ClearBackground();
+		DrawBat();
+		DrawBall();
+		DrawBricks(bricks, bricksState, g_Rows, g_Columns);
+		DrawCanon();
+		DrawBoss();
+		if (g_IsDead)
+		{
+			DrawLose();
+		}
+	}
+	else if (g_BossState == ObjState::Destroyed)
+	{
+		DrawWin();
 	}
 }
 void DrawBat()
@@ -827,6 +839,12 @@ void DrawCanon()
 		}
 		DrawTexture(g_RightCanonBaseTex, RightCanonPos);
 	}
+
+}
+void DrawWin()
+{
+	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
+	DrawTexture(g_WinTex, screen);
 
 }
 void UpdateCanon(float elapsedTime)
