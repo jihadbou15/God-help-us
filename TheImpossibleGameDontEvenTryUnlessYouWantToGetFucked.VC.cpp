@@ -792,7 +792,7 @@ void DrawCanon()
 		{
 			angleLeft[i] = -180.0f + CalculateAngle(g_SavedBatPosLeft[i].left + g_SavedBatPosLeft[i].width / 2, g_SavedBatPosLeft[i].bottom + g_SavedBatPosLeft[i].height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2);
 		}
-
+		std::cout << angleLeft[i] << '\n';
 		//draw the moving canon
 		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft[i], movePivotLeft);
 		//draw laser if active
@@ -810,6 +810,7 @@ void DrawCanon()
 		//draw canonbase
 		DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
 		CollisionLaser(angleLeft[i],movePivotLeft.x, movePivotLeft.y,scale, g_IsShootingLeft[i]);
+
 	}
 	//right canons
 	for (int i{}; i < 2; i++)
@@ -841,6 +842,7 @@ void DrawCanon()
 			}
 		}
 		DrawTexture(g_RightCanonBaseTex, RightCanonPos);
+		std::cout << angleRight[i] << '\n';
 	}
 
 }
@@ -869,7 +871,7 @@ void UpdateCanon()
 			g_IsShootingLeft[i] = true;
 			g_WarningLeft[i] = false;
 		}
-		if (g_Framecounter == triggersLeft[i]+ laserDuration)
+		if (g_Framecounter == (triggersLeft[i]+ laserDuration)%600)
 		{
 			g_IsShootingLeft[i] = false;
 			g_LockAngleLeft[i] = false;
@@ -891,7 +893,7 @@ void UpdateCanon()
 			g_IsShootingRight[i] = true;
 			g_WarningRight[i] = false;
 		}
-		if (g_Framecounter == triggersRight[i] + laserDuration)
+		if (g_Framecounter == (triggersRight[i] + laserDuration)%600)
 		{
 			g_IsShootingRight[i] = false;
 			g_LockAngleRight[i] = false;
@@ -902,16 +904,35 @@ void UpdateCanon()
 
 void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale, bool isShooting)
 {
+	bool IsLeft{};
+	bool IsRight{};
+	if (angle < -20.0f && angle > -40.0f)
+	{
+		IsLeft = true;
+	}
+	else
+	{
+		IsRight = true;
+	}
 	float laserWidth{scale*50.0f};
-	Point2f laserPoint1{ -20.0f+pivotPointX + (((pivotPointY - g_BatRect.height - g_BatRect.bottom) /tan((-angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
+	Point2f laserPoint1{ -20.0f*IsLeft -5.0f*IsRight+pivotPointX + (((pivotPointY - g_BatRect.height - g_BatRect.bottom) /tan((-angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
 	Point2f laserPoint2{ laserPoint1.x + laserWidth,laserPoint1.y};
 	Point2f laserPoint3{ laserPoint1.x - (g_BatRect.height / tan((angle / 360.0f)*3.14f * 2)),laserPoint1.y - g_BatRect.height };
 	Point2f laserPoint4{ laserPoint3.x + laserWidth ,laserPoint1.y - g_BatRect.height };
 
+	glBegin(GL_QUADS);
+
+	glVertex2f(laserPoint3.x, laserPoint3.y);
+	glVertex2f(laserPoint4.x, laserPoint4.y);
+	glVertex2f(laserPoint2.x, laserPoint2.y);
+	glVertex2f(laserPoint1.x, laserPoint1.y);
+
+	glEnd();
 	bool checkPoint1{ dae::IsXBetween(laserPoint2.x, laserPoint1.x, g_BatRect.left) };
 	bool checkPoint2{ dae::IsXBetween(laserPoint2.x, laserPoint1.x, g_BatRect.left + g_BatRect.width) };
 	bool checkPoint3{ dae::IsXBetween(laserPoint4.x, laserPoint3.x, g_BatRect.left) };
 	bool checkPoint4{ dae::IsXBetween(laserPoint4.x, laserPoint3.x, g_BatRect.left + g_BatRect.width) };
+
 	if ((checkPoint1 || checkPoint2|| checkPoint3|| checkPoint4) && isShooting)
 	{
 		g_Framecounter2++;
@@ -927,7 +948,7 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 			g_HoldBatPos = true;
 		}
 	
-		if (g_Framecounter2 == 60)
+		if (g_Framecounter2 > 60)
 		{
 			g_IsDead = true;
 
