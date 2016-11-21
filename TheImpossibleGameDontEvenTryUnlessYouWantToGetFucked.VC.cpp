@@ -907,7 +907,7 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 	if ((checkPoint1 || checkPoint2|| checkPoint3|| checkPoint4) && isShooting)
 	{
 		g_Framecounter2++;
-		g_Framecounter2 %= 120;
+		g_Framecounter2 %= 70;
 		
 		if (!g_SaveBatPos)
 		{
