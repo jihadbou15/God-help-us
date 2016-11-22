@@ -115,6 +115,8 @@ void UpdateCanon();
 void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scale, bool isShooting);
 void CheckDeadByLaser();
 
+void ShowControls();
+
 // Variables
 
 int g_FrameCounter{};
@@ -198,6 +200,7 @@ int g_Framecounter2{};
 bool g_SaveBatPos{};
 bool g_HoldBatPos{};
 Rectf g_Screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
+bool g_ShowControls{};
 #pragma endregion gameDeclarations
 
 
@@ -241,6 +244,7 @@ int main(int argc, char* args[])
 
 	// Initialize SDL and OpenGL
 	Initialize();
+
 
 	// Event loop
 	Run();
@@ -394,6 +398,9 @@ void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
 	case SDLK_RIGHT:
 		g_MoveRight = true;
 		break;
+	case SDLK_i:
+		g_ShowControls = true;
+		break;
 	}
 }
 void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
@@ -410,8 +417,6 @@ void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
 }
 void ProcessMouseMotionEvent(const SDL_MouseMotionEvent & e)
 {
-	//std::cout << "  [" << e.x << ", " << e.y << "]\n";
-	//Point2f mousePos{ float( e.x ), float( g_WindowHeight - e.y ) };
 }
 void ProcessMouseDownEvent(const SDL_MouseButtonEvent & e)
 {
@@ -419,22 +424,7 @@ void ProcessMouseDownEvent(const SDL_MouseButtonEvent & e)
 }
 void ProcessMouseUpEvent(const SDL_MouseButtonEvent & e)
 {
-	//std::cout << "  [" << e.x << ", " << e.y << "]\n";
-	switch (e.button)
-	{
-	case SDL_BUTTON_LEFT:
-	{
-		//std::cout << "Left mouse button released\n";
-		//Point2f mousePos{ float( e.x ), float( g_WindowHeight - e.y ) };
-		break;
-	}
-	case SDL_BUTTON_RIGHT:
-		//std::cout << "Right mouse button released\n";
-		break;
-	case SDL_BUTTON_MIDDLE:
-		//std::cout << "Middle mouse button released\n";
-		break;
-	}
+
 }
 
 
@@ -469,7 +459,18 @@ void Draw()
 	{
 		CheckDeadByLaser();
 	}
+	ShowControls();
 	
+}
+void ShowControls()
+{
+
+	if (g_ShowControls)
+	{
+		system("cls");
+		std::cout << "Donald Trump has build a wall between mexico and the U.S.A.\nSave Mexico by destroying the wall and Donald Trump! \nControls: \nRight arrow key to move right.\nLeft arrow key to move right.\n";
+		g_ShowControls = false;
+	}
 }
 void DrawBat()
 {
@@ -772,6 +773,7 @@ void DrawCanon()
 	float xOffset{ -40.0f};
 	float angleLeft[g_LeftSize]{};
 	float angleRight[g_RightSize]{};
+
 	//for better texture alignment
 	float correction{ 15.0f };
 	float correction2{ 2.0f };
@@ -792,7 +794,6 @@ void DrawCanon()
 		{
 			angleLeft[i] = -180.0f + CalculateAngle(g_SavedBatPosLeft[i].left + g_SavedBatPosLeft[i].width / 2, g_SavedBatPosLeft[i].bottom + g_SavedBatPosLeft[i].height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2);
 		}
-		std::cout << angleLeft[i] << '\n';
 		//draw the moving canon
 		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft[i], movePivotLeft);
 		//draw laser if active
@@ -809,6 +810,7 @@ void DrawCanon()
 		}
 		//draw canonbase
 		DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
+		//check collision with bat
 		CollisionLaser(angleLeft[i],movePivotLeft.x, movePivotLeft.y,scale, g_IsShootingLeft[i]);
 
 	}
@@ -842,7 +844,6 @@ void DrawCanon()
 			}
 		}
 		DrawTexture(g_RightCanonBaseTex, RightCanonPos);
-		std::cout << angleRight[i] << '\n';
 	}
 
 }
@@ -920,14 +921,6 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 	Point2f laserPoint3{ laserPoint1.x - (g_BatRect.height / tan((angle / 360.0f)*3.14f * 2)),laserPoint1.y - g_BatRect.height };
 	Point2f laserPoint4{ laserPoint3.x + laserWidth ,laserPoint1.y - g_BatRect.height };
 
-	glBegin(GL_QUADS);
-
-	glVertex2f(laserPoint3.x, laserPoint3.y);
-	glVertex2f(laserPoint4.x, laserPoint4.y);
-	glVertex2f(laserPoint2.x, laserPoint2.y);
-	glVertex2f(laserPoint1.x, laserPoint1.y);
-
-	glEnd();
 	bool checkPoint1{ dae::IsXBetween(laserPoint2.x, laserPoint1.x, g_BatRect.left) };
 	bool checkPoint2{ dae::IsXBetween(laserPoint2.x, laserPoint1.x, g_BatRect.left + g_BatRect.width) };
 	bool checkPoint3{ dae::IsXBetween(laserPoint4.x, laserPoint3.x, g_BatRect.left) };
@@ -936,7 +929,7 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 	if ((checkPoint1 || checkPoint2|| checkPoint3|| checkPoint4) && isShooting)
 	{
 		g_Framecounter2++;
-		g_Framecounter2 %= 70;
+		g_Framecounter2 %= 40;
 		
 		if (!g_SaveBatPos)
 		{
@@ -948,7 +941,7 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 			g_HoldBatPos = true;
 		}
 	
-		if (g_Framecounter2 > 60)
+		if (g_Framecounter2 > 30)
 		{
 			g_IsDead = true;
 
@@ -983,9 +976,6 @@ void RotateTexture(Texture texture, Rectf texturePos, float angle, Point2f Pivot
 		glPopMatrix();
 		glDisable(GL_TEXTURE_2D);	
 		glMatrixMode(GL_PROJECTION);
-	
-
-
 }
 
 void DrawBoss()
