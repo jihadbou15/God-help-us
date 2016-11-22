@@ -196,6 +196,7 @@ Rectf g_SavedBatPosRight[g_RightSize]{};
 Rectf g_SavedBatPosDead{};
 int g_Framecounter{};
 int g_Framecounter2{};
+int g_BigFramecounter{};
 bool g_SaveBatPos{};
 bool g_HoldBatPos{};
 Rectf g_Screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
@@ -878,12 +879,12 @@ void DrawWin()
 }
 void UpdateCanon()
 {
-
+	g_BigFramecounter++;
 	g_Framecounter++;
 	g_Framecounter %= 600;
 	int triggersLeft[g_LeftSize]{180,360,540};
 	int triggersRight[g_RightSize]{ 300,240 };
-	int laserDuration{140};
+	int laserDuration{120+ (g_BigFramecounter/12) };
 	for (int i{}; i < g_LeftSize; i++)
 	{
 
