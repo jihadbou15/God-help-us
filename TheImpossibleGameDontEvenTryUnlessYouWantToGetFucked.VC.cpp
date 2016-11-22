@@ -154,8 +154,8 @@ bool g_IsDead{};
 Point2f g_Radius{ 10.0f,10.0f };
 Point2f g_Center{ g_Ballpos.x,g_Ballpos.y };
 Point2f g_PrevBallPos{};
-float g_VelBallYValue{ 300.0f };
-float g_VelBallXValue{ 300.0f };
+float g_VelBallYValue{ 500.0f };
+float g_VelBallXValue{ 500.0f };
 ObjState g_BallState{ObjState::Running};
 
 //Boss Var
@@ -873,7 +873,7 @@ void DrawWin()
 {
 	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
 	DrawTexture(g_WinTex, screen);
-
+	
 	std::cout << "you used " << g_DeathCounter << " balls to destroy America" << std::endl;
 
 }
@@ -884,7 +884,7 @@ void UpdateCanon()
 	g_Framecounter %= 600;
 	int triggersLeft[g_LeftSize]{180,360,540};
 	int triggersRight[g_RightSize]{ 300,240 };
-	int laserDuration{120+ (g_BigFramecounter/6) };
+	int laserDuration{120+ (g_BigFramecounter/60) };
 	for (int i{}; i < g_LeftSize; i++)
 	{
 
