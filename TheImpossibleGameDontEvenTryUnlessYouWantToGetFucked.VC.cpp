@@ -202,7 +202,8 @@ int main(int argc, char* args[])
 {
 	int choice{};
 
-	std::cout << "Choose difficulty level:  0 = easy , 1  = medium , 2 = hard , 3 = Daddy, 4 = Dead on arrival: ";
+	std::cout << "Difficulty levels:" << std::endl << "0 = easy" << std::endl << "1  = medium " << std::endl << " 2 = hard" << std::endl << " 3 = Daddy" "4 = Dead on arrival:" << std::endl;
+	std::cout << "Choice: ";
 	std::cin >> choice;
 	
 	while (choice < 0 && choice > 4)
@@ -707,38 +708,45 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 	};
 	if (IsBallXInRect && IsBallYInRect)// if the ball hits the rect
 	{
-		//if it hits on the left or right
-		if (PrevBallPos.y <= rectangle.bottom + rectangle.height && PrevBallPos.y >= rectangle.bottom)
-		{
-			g_VelBallXValue = -g_VelBallXValue;
-			//if it hits on the right
-			if (PrevBallPos.x > rectangle.left && PrevBallPos.x > rectangle.left + rectangle.width)
-			{
-				g_Center.x = rectangle.left + rectangle.width + g_Radius.x+ 2.0f;
-			}
-			//if it hits on the left
-			else
-			{
-				g_Center.x = rectangle.left - g_Radius.x - 2.0f;
-			}
-		}
 		//if it hits on the top or bottom
-		if (PrevBallPos.x >= rectangle.left  && PrevBallPos.x <= rectangle.left + rectangle.width)
+		if (PrevBallPos.x + g_Radius.x > rectangle.left  && PrevBallPos.x - g_Radius.x < rectangle.left + rectangle.width)
 		{
-			g_VelBallYValue = -g_VelBallYValue;
+			
 			//if it hits on the top
-			if (PrevBallPos.y > rectangle.bottom && PrevBallPos.y > rectangle.bottom + rectangle.height)
+			if (PrevBallPos.y - g_Radius.y > rectangle.bottom + rectangle.height)
 			{
 				g_Center.y = rectangle.bottom + rectangle.height + g_Radius.y;
+				g_VelBallYValue = -g_VelBallYValue;
 			}
 			//if it hits on the bottom
-			else
+			else if (PrevBallPos.y + g_Radius.y < rectangle.bottom)
 			{
 				g_Center.y = rectangle.bottom - g_Radius.y;
+				g_VelBallYValue = -g_VelBallYValue;
 			}
 		}
+		//if it hits on the left or right
+		if (PrevBallPos.y - g_Radius.y < rectangle.bottom + rectangle.height && PrevBallPos.y + g_Radius.y > rectangle.bottom)
+		{
+		
+			//if it hits on the right
+			if (PrevBallPos.x - g_Radius.x > rectangle.left + rectangle.width)
+			{
+				g_Center.x = rectangle.left + rectangle.width + g_Radius.x;
+				g_VelBallXValue = -g_VelBallXValue;
 
+			}
+			//if it hits on the left
+			else if (PrevBallPos.x + g_Radius.x < rectangle.left)
+			{
+				g_Center.x = rectangle.left - g_Radius.x;
+				g_VelBallXValue = -g_VelBallXValue;
+
+			}
+		}
+		
 		return true;
+
 	}
 
 	return false;
@@ -845,6 +853,8 @@ void DrawWin()
 {
 	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
 	DrawTexture(g_WinTex, screen);
+
+	std::cout << "you used " << g_DeathCounter << " balls to destroy America" << std::endl;
 
 }
 void UpdateCanon(float elapsedTime)
