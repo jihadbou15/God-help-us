@@ -107,13 +107,15 @@ void DrawBall();
 void DrawBricks(Rectf *pArray, ObjState *pState, int rows, int columns);
 void DrawBoss();
 void DrawCanon();
+void DrawWin();
+
 void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 void RotateTexture(Texture texture,Rectf texturePos, float angle, Point2f Pivot);
 void UpdateCanon();
 void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scale, bool isShooting);
-void CheckDeadByLaser();
+void DrawLose();
 
 void ShowControls();
 
@@ -127,17 +129,14 @@ int g_DeathCounter{};
 const Point2f g_BatDimens{ 100.0f,50.0f };
 const Point2f g_BatPos{ g_WindowWidth / 2 - g_BatDimens.x / 2 ,60.0f };
 float g_VelBatValue{ 500.0f };
-float g_ColorR{ 0.0f };
-float g_ColorG{ 1.0f };
-float g_ColorB{ 0.0f };
-float g_ColorA{ 0.5f };
+
 Diff g_GameDiff{};
 
 const Point2f g_Ballpos{ g_WindowWidth / 2,120.0f };
+
 //brick var 
 float g_BrickWidth{ 40.0f };
 float g_BrickHeight{ 20.0f };
-
 int g_Rows{};
 int g_Columns{ int((g_WindowWidth - g_BrickWidth) / g_BrickWidth) };
 
@@ -152,7 +151,6 @@ bool g_MoveRight{};
 bool g_IsDead{};
 
 //Ball var
-Color4f g_ColorBall{ g_ColorR ,g_ColorG ,g_ColorB ,g_ColorA };
 Point2f g_Radius{ 10.0f,10.0f };
 Point2f g_Center{ g_Ballpos.x,g_Ballpos.y };
 Point2f g_PrevBallPos{};
@@ -181,6 +179,7 @@ Texture g_LeftCanonBaseTex{};
 Texture g_RightCanonBaseTex{};
 Texture g_LoserTex{};
 Texture g_BackGroundTex{};
+Texture g_WinTex{};
 
 //laser var
 const int g_LeftSize{3};
@@ -210,7 +209,8 @@ int main(int argc, char* args[])
 {
 	int choice{};
 
-	std::cout << "Choose difficulty level:  0 = easy , 1  = medium , 2 = hard , 3 = Daddy, 4 = Dead on arrival: ";
+	std::cout << "Difficulty levels:" << std::endl << "0 = easy" << std::endl << "1  = medium " << std::endl << " 2 = hard" << std::endl << " 3 = Daddy" "4 = Dead on arrival:" << std::endl;
+	std::cout << "Choice: ";
 	std::cin >> choice;
 	
 	while (choice < 0 && choice > 4)
@@ -337,12 +337,18 @@ void InitGameResources()
 	{
 		std::cout << "Loser.png failed to load." << std::endl;
 	}
-	
+
 	result = TextureFromFile("Resources/background.png", g_BackGroundTex);
 	if (!result)
 	{
 		std::cout << "background.png failed to load." << std::endl;
 	}
+	result = TextureFromFile("Resources/Win.png", g_WinTex);
+	if (!result)
+	{
+		std::cout << "Win.png failed to load." << std::endl;
+	}
+
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -370,6 +376,7 @@ void InitBricks(Rectf * pArray, ObjState *pState, int columns, int rows)
 	}
 }
 }
+
 void FreeGameResources( )
 {
 	DeleteTexture(g_BallTex);
@@ -386,6 +393,7 @@ void FreeGameResources( )
 	DeleteTexture(g_RightCanonBaseTex);
 	DeleteTexture(g_LoserTex);
 	DeleteTexture(g_BackGroundTex);
+	DeleteTexture(g_WinTex);
 	
 }
 void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
@@ -425,7 +433,7 @@ void ProcessMouseDownEvent(const SDL_MouseButtonEvent & e)
 void ProcessMouseUpEvent(const SDL_MouseButtonEvent & e)
 {
 
-}
+	}
 
 
 void ClearBackground()
@@ -439,7 +447,7 @@ void Update(float elapsedSec)
 	UpdateBall(elapsedSec, bricks, bricksState);
 	UpdateCanon();
 }
-void CheckDeadByLaser()
+void DrawLose()
 {
 		
 		DrawTexture(g_LoserTex, g_Screen);
@@ -447,7 +455,8 @@ void CheckDeadByLaser()
 
 void Draw()
 {
-
+	if (g_BossState == ObjState::Running || g_BossState == ObjState::Destroying)
+	{
 	ClearBackground();
 	DrawTexture(g_BackGroundTex, g_Screen);
 	DrawBat();
@@ -457,10 +466,15 @@ void Draw()
 	DrawBoss();
 	if (g_IsDead)
 	{
-		CheckDeadByLaser();
+			DrawLose();
 	}
 	ShowControls();
 	
+}
+	else if (g_BossState == ObjState::Destroyed)
+	{
+		DrawWin();
+	}
 }
 void ShowControls()
 {
@@ -480,8 +494,8 @@ void DrawBat()
 	}
 	else
 	{
-		DrawTexture(g_BatTex, g_BatRect);
-	}
+	DrawTexture(g_BatTex, g_BatRect);
+}
 }
 void UpdateBat(float elapsedSec)
 {
@@ -711,38 +725,45 @@ bool CollisionDetect(Point2f PrevBallPos, Rectf rectangle)
 	};
 	if (IsBallXInRect && IsBallYInRect)// if the ball hits the rect
 	{
-		//if it hits on the left or right
-		if (PrevBallPos.y <= rectangle.bottom + rectangle.height && PrevBallPos.y >= rectangle.bottom)
-		{
-			g_VelBallXValue = -g_VelBallXValue;
-			//if it hits on the right
-			if (PrevBallPos.x > rectangle.left && PrevBallPos.x > rectangle.left + rectangle.width)
-			{
-				g_Center.x = rectangle.left + rectangle.width + g_Radius.x+ 2.0f;
-			}
-			//if it hits on the left
-			else
-			{
-				g_Center.x = rectangle.left - g_Radius.x - 2.0f;
-			}
-		}
 		//if it hits on the top or bottom
-		if (PrevBallPos.x >= rectangle.left  && PrevBallPos.x <= rectangle.left + rectangle.width)
+		if (PrevBallPos.x + g_Radius.x > rectangle.left  && PrevBallPos.x - g_Radius.x < rectangle.left + rectangle.width)
 		{
-			g_VelBallYValue = -g_VelBallYValue;
+			
 			//if it hits on the top
-			if (PrevBallPos.y > rectangle.bottom && PrevBallPos.y > rectangle.bottom + rectangle.height)
+			if (PrevBallPos.y - g_Radius.y > rectangle.bottom + rectangle.height)
 			{
 				g_Center.y = rectangle.bottom + rectangle.height + g_Radius.y;
+				g_VelBallYValue = -g_VelBallYValue;
 			}
 			//if it hits on the bottom
-			else
+			else if (PrevBallPos.y + g_Radius.y < rectangle.bottom)
 			{
 				g_Center.y = rectangle.bottom - g_Radius.y;
+				g_VelBallYValue = -g_VelBallYValue;
+			}
+		}
+		//if it hits on the left or right
+		if (PrevBallPos.y - g_Radius.y < rectangle.bottom + rectangle.height && PrevBallPos.y + g_Radius.y > rectangle.bottom)
+		{
+		
+			//if it hits on the right
+			if (PrevBallPos.x - g_Radius.x > rectangle.left + rectangle.width)
+			{
+				g_Center.x = rectangle.left + rectangle.width + g_Radius.x;
+				g_VelBallXValue = -g_VelBallXValue;
+
+			}
+			//if it hits on the left
+			else if (PrevBallPos.x + g_Radius.x < rectangle.left)
+			{
+				g_Center.x = rectangle.left - g_Radius.x;
+				g_VelBallXValue = -g_VelBallXValue;
+
 			}
 		}
 
 		return true;
+
 	}
 
 	return false;
@@ -847,6 +868,14 @@ void DrawCanon()
 	}
 
 }
+void DrawWin()
+{
+	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
+	DrawTexture(g_WinTex, screen);
+
+	std::cout << "you used " << g_DeathCounter << " balls to destroy America" << std::endl;
+
+}
 void UpdateCanon()
 {
 
@@ -943,7 +972,7 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 	
 		if (g_Framecounter2 > 30)
 		{
-			g_IsDead = true;
+		g_IsDead = true;
 
 		}
 	}
