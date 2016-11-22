@@ -887,7 +887,7 @@ void UpdateCanon()
 	for (int i{}; i < g_LeftSize; i++)
 	{
 
-		if (g_Framecounter == triggersLeft[i]-60)
+		if (g_Framecounter == triggersLeft[i]-90)
 		{
 			g_WarningLeft[i] = true;
 			g_LockAngleLeft[i] = true;
@@ -909,7 +909,7 @@ void UpdateCanon()
 	}
 	for (int i{}; i < g_RightSize; i++)
 	{
-		if (g_Framecounter == triggersRight[i]-60)
+		if (g_Framecounter == triggersRight[i]-90)
 		{
 			g_WarningRight[i] = true;
 			g_LockAngleRight[i] = true;
