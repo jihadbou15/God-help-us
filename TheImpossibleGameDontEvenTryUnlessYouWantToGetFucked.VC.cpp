@@ -111,9 +111,11 @@ void ClearBackground();
 
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y);
 void RotateTexture(Texture texture,Rectf texturePos, float angle, Point2f Pivot);
-void UpdateCanon(float elapsedTime);
+void UpdateCanon();
 void CollisionLaser(float angle, float pivotPointX, float pivotPointY,float scale, bool isShooting);
 void CheckDeadByLaser();
+
+void ShowControls();
 
 // Variables
 
@@ -178,6 +180,7 @@ Texture g_RightCanonLaserTex{};
 Texture g_LeftCanonBaseTex{};
 Texture g_RightCanonBaseTex{};
 Texture g_LoserTex{};
+Texture g_BackGroundTex{};
 
 //laser var
 const int g_LeftSize{3};
@@ -191,9 +194,13 @@ bool g_LockAngleLeft[g_LeftSize]{};
 bool g_LockAngleRight[g_RightSize]{};
 Rectf g_SavedBatPosLeft[g_LeftSize]{};
 Rectf g_SavedBatPosRight[g_RightSize]{};
-
-
-
+Rectf g_SavedBatPosDead{};
+int g_Framecounter{};
+int g_Framecounter2{};
+bool g_SaveBatPos{};
+bool g_HoldBatPos{};
+Rectf g_Screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
+bool g_ShowControls{};
 #pragma endregion gameDeclarations
 
 
@@ -237,6 +244,7 @@ int main(int argc, char* args[])
 
 	// Initialize SDL and OpenGL
 	Initialize();
+
 
 	// Event loop
 	Run();
@@ -329,7 +337,12 @@ void InitGameResources()
 	{
 		std::cout << "Loser.png failed to load." << std::endl;
 	}
-
+	
+	result = TextureFromFile("Resources/background.png", g_BackGroundTex);
+	if (!result)
+	{
+		std::cout << "background.png failed to load." << std::endl;
+	}
 
 	InitBricks(bricks, bricksState, g_Columns, g_Rows);
 }
@@ -372,6 +385,7 @@ void FreeGameResources( )
 	DeleteTexture(g_LeftCanonBaseTex);
 	DeleteTexture(g_RightCanonBaseTex);
 	DeleteTexture(g_LoserTex);
+	DeleteTexture(g_BackGroundTex);
 	
 }
 void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
@@ -383,6 +397,9 @@ void ProcessKeyDownEvent(const SDL_KeyboardEvent  & e)
 		break;
 	case SDLK_RIGHT:
 		g_MoveRight = true;
+		break;
+	case SDLK_i:
+		g_ShowControls = true;
 		break;
 	}
 }
@@ -400,8 +417,6 @@ void ProcessKeyUpEvent(const SDL_KeyboardEvent  & e)
 }
 void ProcessMouseMotionEvent(const SDL_MouseMotionEvent & e)
 {
-	//std::cout << "  [" << e.x << ", " << e.y << "]\n";
-	//Point2f mousePos{ float( e.x ), float( g_WindowHeight - e.y ) };
 }
 void ProcessMouseDownEvent(const SDL_MouseButtonEvent & e)
 {
@@ -409,22 +424,7 @@ void ProcessMouseDownEvent(const SDL_MouseButtonEvent & e)
 }
 void ProcessMouseUpEvent(const SDL_MouseButtonEvent & e)
 {
-	//std::cout << "  [" << e.x << ", " << e.y << "]\n";
-	switch (e.button)
-	{
-	case SDL_BUTTON_LEFT:
-	{
-		//std::cout << "Left mouse button released\n";
-		//Point2f mousePos{ float( e.x ), float( g_WindowHeight - e.y ) };
-		break;
-	}
-	case SDL_BUTTON_RIGHT:
-		//std::cout << "Right mouse button released\n";
-		break;
-	case SDL_BUTTON_MIDDLE:
-		//std::cout << "Middle mouse button released\n";
-		break;
-	}
+
 }
 
 
@@ -437,19 +437,19 @@ void Update(float elapsedSec)
 {
 	UpdateBat(elapsedSec);
 	UpdateBall(elapsedSec, bricks, bricksState);
-	UpdateCanon(elapsedSec);
-	
+	UpdateCanon();
 }
 void CheckDeadByLaser()
 {
-	Rectf screen{ 0.0f,0.0f,g_WindowWidth, g_WindowHeight };
-	DrawTexture(g_LoserTex,screen);
+		
+		DrawTexture(g_LoserTex, g_Screen);
 }
 
 void Draw()
 {
 
 	ClearBackground();
+	DrawTexture(g_BackGroundTex, g_Screen);
 	DrawBat();
 	DrawBall();
 	DrawBricks(bricks, bricksState, g_Rows, g_Columns);
@@ -459,11 +459,29 @@ void Draw()
 	{
 		CheckDeadByLaser();
 	}
+	ShowControls();
+	
+}
+void ShowControls()
+{
+
+	if (g_ShowControls)
+	{
+		system("cls");
+		std::cout << "Donald Trump has build a wall between mexico and the U.S.A.\nSave Mexico by destroying the wall and Donald Trump! \nControls: \nRight arrow key to move right.\nLeft arrow key to move right.\n";
+		g_ShowControls = false;
+	}
 }
 void DrawBat()
 {
-	//dae::DrawRect(g_BatRect);
-	DrawTexture(g_BatTex, g_BatRect);
+	if (g_HoldBatPos)
+	{
+		DrawTexture(g_deadBatTex, g_SavedBatPosDead);
+	}
+	else
+	{
+		DrawTexture(g_BatTex, g_BatRect);
+	}
 }
 void UpdateBat(float elapsedSec)
 {
@@ -655,8 +673,6 @@ void UpdateBall(float elapsedSec, Rectf *pArray, ObjState *pState)
 	}
 }
 
-	
-
 float CalculateAngle(float Point1X, float Point1Y, float Point2X, float Point2Y)
 {
 	//calculate angle
@@ -757,6 +773,7 @@ void DrawCanon()
 	float xOffset{ -40.0f};
 	float angleLeft[g_LeftSize]{};
 	float angleRight[g_RightSize]{};
+
 	//for better texture alignment
 	float correction{ 15.0f };
 	float correction2{ 2.0f };
@@ -765,7 +782,7 @@ void DrawCanon()
 	for (int i{}; i < 3; i++)
 	{
 		float leftCanonX{ 0.0f };
-		float leftCanonY{ 400.0f };
+		float leftCanonY{ 500.0f };
 		leftCanonY -= i*150.0f;
 		Rectf leftCanon{ leftCanonX + xOffset,leftCanonY,g_LeftCanonTex.width*scale,g_LeftCanonTex.height*scale };
 		Point2f movePivotLeft{ leftCanon.left + leftCanon.width / 2 ,leftCanon.bottom + leftCanon.height / 2 + correction*scale };
@@ -777,30 +794,31 @@ void DrawCanon()
 		{
 			angleLeft[i] = -180.0f + CalculateAngle(g_SavedBatPosLeft[i].left + g_SavedBatPosLeft[i].width / 2, g_SavedBatPosLeft[i].bottom + g_SavedBatPosLeft[i].height / 2, leftCanon.left + leftCanon.width / 2, leftCanon.bottom + leftCanon.height / 2);
 		}
-
 		//draw the moving canon
 		RotateTexture(g_LeftCanonTex, leftCanon, angleLeft[i], movePivotLeft);
 		//draw laser if active
 		for (int i{}; i < g_LeftSize; i++)
 		{
-			if (g_WarningLeft[i] && leftCanonY == 400.0f - 150.0f*i)
+			if (g_WarningLeft[i] && leftCanonY == 500.0f - 150.0f*i)
 			{
 				DrawTexture(g_dangerTex, WarningPos);
 			}
-			if (g_IsShootingLeft[i] && leftCanonY == 400.0f-150.0f*i)
+			if (g_IsShootingLeft[i] && leftCanonY == 500.0f -150.0f*i)
 			{
 				RotateTexture(g_LeftCanonLaserTex, leftLaserPos, angleLeft[i], movePivotLeft);
 			}
 		}
 		//draw canonbase
 		DrawTexture(g_LeftCanonBaseTex, leftCanonPos);
+		//check collision with bat
 		CollisionLaser(angleLeft[i],movePivotLeft.x, movePivotLeft.y,scale, g_IsShootingLeft[i]);
+
 	}
 	//right canons
 	for (int i{}; i < 2; i++)
 	{
 		float RightCanonX{ g_WindowWidth - g_RightCanonTex.width*scale };
-		float RightCanonY{ 300.0f };
+		float RightCanonY{ 400.0f };
 		RightCanonY -= i*150.0f;
 		Rectf RightCanon{ RightCanonX - xOffset*1.5f*scale ,RightCanonY,g_RightCanonTex.width*scale,g_RightCanonTex.height*scale };
 		Point2f movePivotRight{ RightCanon.left + RightCanon.width / 2 + 18.0f*scale ,RightCanon.bottom + RightCanon.height / 2 + correction*scale };
@@ -816,11 +834,11 @@ void DrawCanon()
 		CollisionLaser(angleRight[i], movePivotRight.x, movePivotRight.y, scale, g_IsShootingRight[i]);
 		for (int i{}; i < g_RightSize; i++)
 		{
-			if (g_WarningRight[i] && RightCanonY == 300.0f - i*150.0f)
+			if (g_WarningRight[i] && RightCanonY == 400.0f - i*150.0f)
 			{
 				DrawTexture(g_dangerTex, WarningPos);
 			}
-			if (g_IsShootingRight[i] && RightCanonY == 300.0f-i*150.0f)
+			if (g_IsShootingRight[i] && RightCanonY == 400.0f -i*150.0f)
 			{
 				RotateTexture(g_RightCanonLaserTex, RightLaserPos, angleRight[i], movePivotRight);
 			}
@@ -829,17 +847,18 @@ void DrawCanon()
 	}
 
 }
-void UpdateCanon(float elapsedTime)
+void UpdateCanon()
 {
-	g_TotalElapsedTime += elapsedTime;
-	g_TotalElapsedTime = (int(g_TotalElapsedTime*100) % 1000)/100.0f;
-	float triggersLeft[g_LeftSize]{2.0f,6.0f,9.0f};
-	float triggersRight[g_RightSize]{ 5.0f,3.0f };
-	float laserDuration{3.0f};
+
+	g_Framecounter++;
+	g_Framecounter %= 600;
+	int triggersLeft[g_LeftSize]{180,360,540};
+	int triggersRight[g_RightSize]{ 300,240 };
+	int laserDuration{140};
 	for (int i{}; i < g_LeftSize; i++)
 	{
 
-		if (g_TotalElapsedTime == triggersLeft[i]-1.0f)
+		if (g_Framecounter == triggersLeft[i]-60)
 		{
 			g_WarningLeft[i] = true;
 			g_LockAngleLeft[i] = true;
@@ -848,12 +867,12 @@ void UpdateCanon(float elapsedTime)
 			g_SavedBatPosLeft[i].bottom = g_BatRect.bottom;
 			g_SavedBatPosLeft[i].height = g_BatRect.height;
 		}
-		if (g_TotalElapsedTime == triggersLeft[i])
+		if (g_Framecounter == triggersLeft[i])
 		{
 			g_IsShootingLeft[i] = true;
 			g_WarningLeft[i] = false;
 		}
-		if (g_TotalElapsedTime == float(int((triggersLeft[i]+ laserDuration)*100) % 1000)/100.0f)
+		if (g_Framecounter == (triggersLeft[i]+ laserDuration)%600)
 		{
 			g_IsShootingLeft[i] = false;
 			g_LockAngleLeft[i] = false;
@@ -861,7 +880,7 @@ void UpdateCanon(float elapsedTime)
 	}
 	for (int i{}; i < g_RightSize; i++)
 	{
-		if (g_TotalElapsedTime == triggersRight[i]-1.0f)
+		if (g_Framecounter == triggersRight[i]-60)
 		{
 			g_WarningRight[i] = true;
 			g_LockAngleRight[i] = true;
@@ -870,23 +889,34 @@ void UpdateCanon(float elapsedTime)
 			g_SavedBatPosRight[i].bottom = g_BatRect.bottom;
 			g_SavedBatPosRight[i].height = g_BatRect.height;
 		}
-		if (g_TotalElapsedTime == triggersRight[i])
+		if (g_Framecounter == triggersRight[i])
 		{
 			g_IsShootingRight[i] = true;
 			g_WarningRight[i] = false;
 		}
-		if (g_TotalElapsedTime == float(int((triggersRight[i] + laserDuration) * 100) % 1000) / 100.0f)
+		if (g_Framecounter == (triggersRight[i] + laserDuration)%600)
 		{
 			g_IsShootingRight[i] = false;
 			g_LockAngleRight[i] = false;
 		}
 	}
+
 }
 
 void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale, bool isShooting)
 {
+	bool IsLeft{};
+	bool IsRight{};
+	if (angle < -20.0f && angle > -40.0f)
+	{
+		IsLeft = true;
+	}
+	else
+	{
+		IsRight = true;
+	}
 	float laserWidth{scale*50.0f};
-	Point2f laserPoint1{ -20.0f+pivotPointX + (((pivotPointY - g_BatRect.height - g_BatRect.bottom) /tan((-angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
+	Point2f laserPoint1{ -20.0f*IsLeft -5.0f*IsRight+pivotPointX + (((pivotPointY - g_BatRect.height - g_BatRect.bottom) /tan((-angle/360.0f)*3.14f*2))),g_BatRect.bottom + g_BatRect.height};
 	Point2f laserPoint2{ laserPoint1.x + laserWidth,laserPoint1.y};
 	Point2f laserPoint3{ laserPoint1.x - (g_BatRect.height / tan((angle / 360.0f)*3.14f * 2)),laserPoint1.y - g_BatRect.height };
 	Point2f laserPoint4{ laserPoint3.x + laserWidth ,laserPoint1.y - g_BatRect.height };
@@ -895,9 +925,27 @@ void CollisionLaser(float angle,float pivotPointX, float pivotPointY,float scale
 	bool checkPoint2{ dae::IsXBetween(laserPoint2.x, laserPoint1.x, g_BatRect.left + g_BatRect.width) };
 	bool checkPoint3{ dae::IsXBetween(laserPoint4.x, laserPoint3.x, g_BatRect.left) };
 	bool checkPoint4{ dae::IsXBetween(laserPoint4.x, laserPoint3.x, g_BatRect.left + g_BatRect.width) };
+
 	if ((checkPoint1 || checkPoint2|| checkPoint3|| checkPoint4) && isShooting)
 	{
-		g_IsDead = true;
+		g_Framecounter2++;
+		g_Framecounter2 %= 40;
+		
+		if (!g_SaveBatPos)
+		{
+			g_SavedBatPosDead.left = g_BatRect.left;
+			g_SavedBatPosDead.width = g_BatRect.width;
+			g_SavedBatPosDead.bottom = g_BatRect.bottom;
+			g_SavedBatPosDead.height = g_BatRect.height;
+			g_SaveBatPos = true;
+			g_HoldBatPos = true;
+		}
+	
+		if (g_Framecounter2 > 30)
+		{
+			g_IsDead = true;
+
+		}
 	}
 
 }
@@ -928,9 +976,6 @@ void RotateTexture(Texture texture, Rectf texturePos, float angle, Point2f Pivot
 		glPopMatrix();
 		glDisable(GL_TEXTURE_2D);	
 		glMatrixMode(GL_PROJECTION);
-	
-
-
 }
 
 void DrawBoss()
