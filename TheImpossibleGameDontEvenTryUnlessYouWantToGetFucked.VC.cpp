@@ -884,7 +884,7 @@ void UpdateCanon()
 	g_Framecounter %= 600;
 	int triggersLeft[g_LeftSize]{180,360,540};
 	int triggersRight[g_RightSize]{ 300,240 };
-	int laserDuration{120+ (g_BigFramecounter/12) };
+	int laserDuration{120+ (g_BigFramecounter/3) };
 	for (int i{}; i < g_LeftSize; i++)
 	{
 
